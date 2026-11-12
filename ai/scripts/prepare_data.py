@@ -82,7 +82,7 @@ def main():
     report['sources']['digital_matatus'] = gtfs_report
     report['limitations'] = ['MTA timestamps retain source local clock values (New York); no timezone conversion is applied.', 'Nairobi weather is separate from New York ridership and must not be joined to it.', 'GTFS cleanup preserves strings and optional blanks; it does not validate current routes or repair relationships.', 'No local field labels or model accuracy are supplied.']
     (ROOT / 'reports').mkdir(exist_ok=True)
-    (ROOT / 'reports/data_quality.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    (ROOT / 'reports/data_quality.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8', newline='\n')
     print(json.dumps(report, indent=2))
 
 
