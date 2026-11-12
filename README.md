@@ -55,3 +55,7 @@ Implementation details and setup instructions will be added as development progr
 ## Intended Outcome
 
 NganyaFlow will aim to make matatu travel more predictable by giving commuters clearer stage and route information while supporting structured observation collection and visibility into commuter demand.
+
+## AI preparation
+
+The `AI-Branch` workspace includes public datasets, cleaning scripts and exploration notebooks under [ai/](ai/README.md). It preserves the source files and includes reproducible hourly MTA demand tables, Nairobi weather and historical Digital Matatus data. These are preparation datasets; no local waiting-time model has been trained.

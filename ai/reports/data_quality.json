@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "mta_ridership": {
+      "raw_rows": 51840,
+      "clean_rows": 51840,
+      "exact_duplicates_removed": 0,
+      "missing_values": 0,
+      "hourly_rows": 2160,
+      "total_ridership": 1148966.0,
+      "split_rows": {
+        "train": 1416,
+        "test": 384,
+        "validation": 360
+      }
+    },
+    "nairobi_weather": {
+      "raw_rows": 8760,
+      "clean_rows": 8760,
+      "exact_duplicates_removed": 0,
+      "missing_values": 0,
+      "timezone": "Africa/Nairobi"
+    },
+    "digital_matatus": {
+      "agency": {
+        "raw_rows": 1,
+        "clean_rows": 1,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      },
+      "calendar": {
+        "raw_rows": 1,
+        "clean_rows": 1,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      },
+      "calendar_dates": {
+        "raw_rows": 4,
+        "clean_rows": 4,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      },
+      "feed_info": {
+        "raw_rows": 1,
+        "clean_rows": 1,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      },
+      "frequencies": {
+        "raw_rows": 792,
+        "clean_rows": 792,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      },
+      "routes": {
+        "raw_rows": 136,
+        "clean_rows": 136,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      },
+      "shapes": {
+        "raw_rows": 36483,
+        "clean_rows": 36483,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      },
+      "stop_times": {
+        "raw_rows": 7533,
+        "clean_rows": 7533,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      },
+      "stops": {
+        "raw_rows": 4284,
+        "clean_rows": 4284,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 8475
+      },
+      "trips": {
+        "raw_rows": 272,
+        "clean_rows": 272,
+        "exact_duplicates_removed": 0,
+        "blank_cells": 0
+      }
+    }
+  },
+  "limitations": [
+    "MTA timestamps retain source local clock values (New York); no timezone conversion is applied.",
+    "Nairobi weather is separate from New York ridership and must not be joined to it.",
+    "GTFS cleanup preserves strings and optional blanks; it does not validate current routes or repair relationships.",
+    "No local field labels or model accuracy are supplied."
+  ]
+}

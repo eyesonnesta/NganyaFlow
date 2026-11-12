@@ -1,0 +1,28 @@
+[
+  {
+    "file": "raw/digital_matatus/GTFS_FEED_2019.zip",
+    "url": "https://www.digitalmatatus.com/data/GTFS_FEED_2019.zip",
+    "source_page": "https://www.digitalmatatus.com/map.html",
+    "bytes": 574309,
+    "sha256": "c7fd6252011f22c376ad7e67423f1e81781e13bb6939a8b6fa081d01d51e5f28"
+  },
+  {
+    "file": "raw/nairobi_weather/Nairobi_Hourly_Weather_2025.csv",
+    "bytes": 371913,
+    "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-1.286389&longitude=36.817223&start_date=2025-01-01&end_date=2025-12-31&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Crain%2Ccloud_cover%2Cwind_speed_10m&timezone=Africa%2FNairobi&models=era5&format=csv",
+    "sha256": "a24cf538d30b9c55ca878620005a8d6427119704afbf296727260d7f006e2eaa"
+  },
+  {
+    "file": "raw/mta_ridership/source_metadata.json",
+    "bytes": 15168,
+    "url": "https://data.ny.gov/api/views/gxb3-akrn.json",
+    "sha256": "d8b24cbe7754d39474f6795fa57d2668b4c97e93a926298fb53a0f9594987553"
+  },
+  {
+    "file": "raw/mta_ridership/MTA_M15_Hourly_Ridership_2025_Q1.csv",
+    "url": "https://data.ny.gov/resource/gxb3-akrn.csv?%24where=bus_route%3D%27M15%27+AND+transit_timestamp+%3E%3D+%272025-01-01T00%3A00%3A00%27+AND+transit_timestamp+%3C+%272025-04-01T00%3A00%3A00%27&%24limit=60000",
+    "bytes": 3830387,
+    "filter": "bus_route='M15' AND transit_timestamp >= '2025-01-01T00:00:00' AND transit_timestamp < '2025-04-01T00:00:00'",
+    "sha256": "cacee27861476cd4b22484d26cd3ea2ec38cf3f0dd2597d2971007ff5ea6c245"
+  }
+]
