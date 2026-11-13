@@ -1,0 +1,30 @@
+{
+  "stages": [
+    {
+      "id": "kencom",
+      "name": "Kencom bus stage"
+    },
+    {
+      "id": "odeon",
+      "name": "Odeon bus stage"
+    },
+    {
+      "id": "railways",
+      "name": "Railways area at Nairobi Central Station"
+    }
+  ],
+  "routes": [
+    {
+      "id": "cbd-study-simulated",
+      "name": "CBD study service SIMULATED",
+      "stage_ids": [
+        "kencom",
+        "odeon",
+        "railways"
+      ],
+      "directions": [
+        "townbound"
+      ]
+    }
+  ]
+}

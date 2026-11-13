@@ -1,0 +1,6 @@
+# Source-only local update. Requires a previously built nganyaflow:local image.
+# Use the root Dockerfile whenever requirements.lock changes.
+FROM nganyaflow:local
+COPY --chown=nganyaflow:nganyaflow server/src /app/src
+COPY --chown=nganyaflow:nganyaflow server/data/reference /app/data/reference
+ENV PYTHONPATH=/app/src

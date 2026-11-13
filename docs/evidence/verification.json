@@ -1,0 +1,42 @@
+{
+  "verified_at_utc": "2026-10-27T09:49:08.749366+00:00",
+  "unit_tests_passed": 20,
+  "ruff": "passed",
+  "installed_requirements": "no broken requirements",
+  "admin_browser_actions": [
+    "authenticated sign in",
+    "file selection",
+    "dataset validation and import",
+    "three-day holdout training",
+    "review of candidate metrics",
+    "activation"
+  ],
+  "protected_report_download": "passed",
+  "downloaded_prediction_rows": 1259,
+  "independently_recomputed_mae": 0.9387145882975907,
+  "independently_recomputed_coverage": 0.8006354249404289,
+  "live_prediction_guard": {
+    "status": "unavailable",
+    "reason": "stale_evidence",
+    "median_minutes": null,
+    "lower_minutes": null,
+    "upper_minutes": null,
+    "nominal_coverage": 0.8,
+    "evidence_count": 0,
+    "last_observed_at": "2026-10-18T10:28:46Z",
+    "expires_at": null,
+    "model_version": null,
+    "data_kind": null
+  },
+  "model": {
+    "estimator_class": "quantile_forest._quantile_forest.RandomForestQuantileRegressor",
+    "trees": 100,
+    "encoded_features": 9,
+    "active_model_version": "6180f85b9e302bd7",
+    "current_arrival_row_hash": "2821ffeff5233536357939ef53fb66bacb58faa73d93cba312996bc7a44c58d4",
+    "data_kind": "synthetic"
+  },
+  "container_image": "sha256:59d054743c5aa30c70aa62b3285fe1e24822f0c3a83cf95929bc547343398757",
+  "build_method": "source-only cached image; root network build stalled",
+  "screenshots": "browser viewport captures without pointer overlay"
+}

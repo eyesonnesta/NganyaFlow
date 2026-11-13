@@ -1,0 +1,61 @@
+{
+  "dataset_id": "digital-matatus-2019-network-v1",
+  "data_kind": "external_network",
+  "title": "Digital Matatus Nairobi GTFS feed, published 2019-05-30",
+  "landing_url": "https://www.digitalmatatus.com/map.html",
+  "download_url": "https://www.digitalmatatus.com/data/GTFS_FEED_2019.zip",
+  "methodology_url": "https://www.digitalmatatus.com/about.html",
+  "retrieved_at": "2026-11-02T17:44:32.595816+00:00",
+  "archive_sha256": "c7fd6252011f22c376ad7e67423f1e81781e13bb6939a8b6fa081d01d51e5f28",
+  "archive_bytes": 574309,
+  "source_rows": {
+    "agency": 1,
+    "calendar": 1,
+    "calendar_dates": 4,
+    "feed_info": 1,
+    "frequencies": 792,
+    "routes": 136,
+    "shapes": 36483,
+    "stop_times": 7533,
+    "stops": 4284,
+    "trips": 272
+  },
+  "clean_stops": 4284,
+  "rejected_stops": 0,
+  "rejection_reasons": {},
+  "cbd_stops": 85,
+  "cbd_routes": 93,
+  "cbd_route_stop_links": 351,
+  "cbd_rectangle": {
+    "min_lat": -1.295,
+    "max_lat": -1.275,
+    "min_lon": 36.815,
+    "max_lon": 36.835
+  },
+  "feed_metadata": [
+    {
+      "feed_publisher_name": "TRAINING",
+      "feed_publisher_url": "http://www.digitalmatatus.com/",
+      "feed_lang": "en",
+      "feed_start_date": "20120302",
+      "feed_end_date": "20201231"
+    }
+  ],
+  "calendar": [
+    {
+      "service_id": "DAILY",
+      "monday": "1",
+      "tuesday": "1",
+      "wednesday": "1",
+      "thursday": "1",
+      "friday": "1",
+      "saturday": "1",
+      "sunday": "1",
+      "start_date": "20190101",
+      "end_date": "20201231"
+    }
+  ],
+  "wait_model_training_eligible": false,
+  "reason": "Static GTFS network/frequency feed; no dated, repeated observed arrivals.",
+  "license_status": "Official site offers data freely; no explicit license in ZIP. Original and processed files remain local and excluded from Git."
+}

@@ -1,0 +1,165 @@
+{
+  "model_version": "6180f85b9e302bd7",
+  "data_kind": "synthetic",
+  "dataset_ids": [
+    "nairobi-cbd-synthetic-v1"
+  ],
+  "data_sha256": "2821ffeff5233536357939ef53fb66bacb58faa73d93cba312996bc7a44c58d4",
+  "configuration": {
+    "min_samples": 30,
+    "min_days": 3,
+    "test_days": 3,
+    "n_estimators": 100,
+    "min_samples_leaf": 5,
+    "max_features": 1.0,
+    "max_samples_leaf": "all",
+    "random_state": 42,
+    "label_grid_minutes": 1,
+    "maximum_interval_minutes": 120
+  },
+  "software": {
+    "python": "3.12.15",
+    "quantile-forest": "1.4.2",
+    "scikit-learn": "1.9.1",
+    "numpy": "2.5.4"
+  },
+  "input_arrivals": 1049,
+  "input_sessions": 84,
+  "train_sessions": 66,
+  "test_sessions": 18,
+  "train_days": [
+    "2026-10-05",
+    "2026-10-06",
+    "2026-10-07",
+    "2026-10-08",
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11",
+    "2026-10-12",
+    "2026-10-13",
+    "2026-10-14",
+    "2026-10-15"
+  ],
+  "test_days": [
+    "2026-10-16",
+    "2026-10-17",
+    "2026-10-18"
+  ],
+  "train_samples": 4684,
+  "test_samples": 1259,
+  "excluded_test_samples": 0,
+  "mae_minutes": 0.9387145882975907,
+  "historical_median_mae_minutes": 2.2109875562615833,
+  "last_headway_mae_minutes": 1.0179375165475244,
+  "nominal_coverage": 0.8,
+  "empirical_coverage": 0.8006354249404289,
+  "mean_interval_width_minutes": 3.1014614773629865,
+  "pinball_loss": {
+    "0.1": 0.18564548583531906,
+    "0.5": 0.46935729414879535,
+    "0.9": 0.2245655281969817
+  },
+  "target": "Minutes until next observed arrival at a minute-grid query time",
+  "limitations": "Uncalibrated pilot intervals; no seat guarantee; complete sessions only",
+  "per_group": [
+    {
+      "stage_id": "kencom",
+      "route_id": "cbd-study-simulated",
+      "direction": "townbound",
+      "test_samples": 439,
+      "mae_minutes": 0.873424449506454,
+      "empirical_coverage": 0.7699316628701595
+    },
+    {
+      "stage_id": "odeon",
+      "route_id": "cbd-study-simulated",
+      "direction": "townbound",
+      "test_samples": 424,
+      "mae_minutes": 0.8813286163522013,
+      "empirical_coverage": 0.7806603773584906
+    },
+    {
+      "stage_id": "railways",
+      "route_id": "cbd-study-simulated",
+      "direction": "townbound",
+      "test_samples": 396,
+      "mae_minutes": 1.0725378787878788,
+      "empirical_coverage": 0.8560606060606061
+    }
+  ],
+  "per_day": [
+    {
+      "day": "2026-10-16",
+      "test_samples": 429,
+      "mae_minutes": 0.9153846153846155
+    },
+    {
+      "day": "2026-10-17",
+      "test_samples": 421,
+      "mae_minutes": 0.982739509105305
+    },
+    {
+      "day": "2026-10-18",
+      "test_samples": 409,
+      "mae_minutes": 0.9178687856560718
+    }
+  ],
+  "shuffled_label_mae_minutes": 2.409346041832142,
+  "learning_curve": [
+    {
+      "training_days": 3,
+      "training_samples": 1280,
+      "train_mae_minutes": 0.6276171875,
+      "test_mae_minutes": 1.1363383637807785
+    },
+    {
+      "training_days": 5,
+      "training_samples": 2138,
+      "train_mae_minutes": 0.6389148737137512,
+      "test_mae_minutes": 1.0162695260788985
+    },
+    {
+      "training_days": 11,
+      "training_samples": 4684,
+      "train_mae_minutes": 0.6360678195274694,
+      "test_mae_minutes": 0.9387145882975907
+    }
+  ],
+  "permutation_importance": [
+    {
+      "feature": "elapsed_minutes",
+      "mae_increase_minutes": 1.8157201482658192,
+      "std_minutes": 0.018697947818375193
+    },
+    {
+      "feature": "last_headway_minutes",
+      "mae_increase_minutes": 1.7261164063189478,
+      "std_minutes": 0.10011934803863282
+    },
+    {
+      "feature": "stage_id",
+      "mae_increase_minutes": 0.12928029300150032,
+      "std_minutes": 0.006389931706794503
+    },
+    {
+      "feature": "hour",
+      "mae_increase_minutes": 0.09316035654399431,
+      "std_minutes": 0.008945385972890105
+    },
+    {
+      "feature": "route_id",
+      "mae_increase_minutes": 0.0,
+      "std_minutes": 0.0
+    },
+    {
+      "feature": "direction",
+      "mae_increase_minutes": 0.0,
+      "std_minutes": 0.0
+    },
+    {
+      "feature": "weekday",
+      "mae_increase_minutes": -0.001054628894184173,
+      "std_minutes": 0.0028099253624305634
+    }
+  ]
+}

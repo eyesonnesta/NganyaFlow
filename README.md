@@ -1,5 +1,40 @@
 # NganyaFlow
 
+## Backend development
+
+For the Artificial Intelligence study, read the [AI foundation and validation report](docs/ai-report.md)
+and [presentation outline](docs/presentation-outline.md). The included Nairobi CBD dataset uses
+real place names with explicitly simulated arrival times and a simulated study service.
+
+For executable NumPy/pandas analysis, open the [data cleaning and model evaluation notebook](server/notebooks/01_data_cleaning_and_model_evaluation.ipynb).
+Its [setup guide](server/notebooks/README.md) explains how to launch Jupyter and rerun the analysis.
+The [dataset inventory](server/data/README.md) separates the real Digital Matatus
+Nairobi network from the generated arrival sequences used to evaluate waiting times.
+For a separate study of the downloaded network, open the
+[real Nairobi data notebook](server/notebooks/03_real_nairobi_network_analysis.ipynb).
+
+The Python pilot backend, observation collection, model training and admin panel
+now live under `server/`. Start with [development and Docker instructions](docs/development.md).
+The root `Dockerfile` runs the server with supervisord; build it with
+`bash build-docker.sh`. The Android client is reserved under `apps/android/`.
+
+```text
+apps/android/                 Future mobile application
+server/src/nganyaflow/        API, storage, admin, training and inference
+server/tests/                Backend and model-pipeline checks
+server/notebooks/            Executed data cleaning and model evaluation study
+server/data/reference/       Verified stage/route catalog
+server/data/raw/             Local observations (not committed)
+server/data/processed/       Training exports (not committed)
+server/artifacts/            Trained model files (not committed)
+server/runtime/              Admin credentials and selected models (not committed)
+deploy/                      Supervisord configuration
+docs/                        Setup, API workflow and research decisions
+```
+
+The sections below describe the wider product vision. The implemented slice is
+enumerator collection, waiting-time training/inference and local administration.
+
 NganyaFlow will be an Android application that will help commuters access information about matatu routes, stages, and expected waiting times. The project will aim to reduce uncertainty at boarding stages and support better travel decisions through collected transport observations and commuter reports.
 
 ## What the Project Will Entail
