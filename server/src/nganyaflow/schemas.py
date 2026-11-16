@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
@@ -14,14 +14,24 @@ class Record(BaseModel):
 class Stage(Record):
     id: str = Field(min_length=1, max_length=80)
     name: str = Field(min_length=1, max_length=160)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
 
 
-class Route(Stage):
+class Route(Record):
+    id: str = Field(min_length=1, max_length=80)
+    name: str = Field(min_length=1, max_length=160)
+    short_name: str | None = Field(default=None, max_length=20)
+    corridor: str | None = Field(default=None, max_length=80)
+    # Ordered from the town terminus outward.
     stage_ids: list[str]
     directions: list[Direction] = Field(min_length=1)
+    source: str | None = Field(default=None, max_length=60)
 
 
 class Catalog(Record):
+    version: str | None = None
+    attribution: str | None = None
     stages: list[Stage]
     routes: list[Route]
 
@@ -75,3 +85,39 @@ class Estimate(Record):
     expires_at: datetime | None = None
     model_version: str | None = None
     data_kind: str | None = None
+    occupancy: Literal["empty", "seats_available", "full", "unknown"] = "unknown"
+    occupancy_observed_at: datetime | None = None
+
+
+class BoardingReport(Record):
+    id: UUID
+    install_id: UUID
+    stage_id: str = Field(min_length=1, max_length=80)
+    route_id: str = Field(min_length=1, max_length=80)
+    direction: Direction
+    boarded_at: AwareDatetime
+    consent_version: str = Field(min_length=1, max_length=40)
+
+    @field_validator("boarded_at")
+    @classmethod
+    def plausible_time(cls, value: datetime) -> datetime:
+        now = datetime.now(UTC)
+        if value > now + timedelta(minutes=2):
+            raise ValueError("Future timestamps are not accepted")
+        if value < now - timedelta(days=7):
+            raise ValueError("Reports older than seven days are not accepted")
+        return value.astimezone(UTC)
+
+
+class ReportBatch(Record):
+    records: list[BoardingReport] = Field(min_length=1, max_length=100)
+
+
+class DeletionRequest(Record):
+    id: UUID
+    install_id: UUID
+
+
+class RedeemCode(Record):
+    code: str = Field(min_length=4, max_length=40)
+    device_name: str | None = Field(default=None, max_length=60)

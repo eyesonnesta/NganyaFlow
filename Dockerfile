@@ -20,6 +20,7 @@ RUN useradd --create-home --uid 10001 nganyaflow \
     && chown -R nganyaflow:nganyaflow /app
 COPY --chown=nganyaflow:nganyaflow server/data/reference /app/data/reference
 COPY deploy/supervisord.conf /etc/supervisor/supervisord.conf
+COPY deploy/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 USER nganyaflow
 ENV NGANYAFLOW_DATABASE=/app/data/raw/observations.sqlite3 \
@@ -27,6 +28,7 @@ ENV NGANYAFLOW_DATABASE=/app/data/raw/observations.sqlite3 \
     NGANYAFLOW_RUNTIME_DIR=/app/runtime
 EXPOSE 8000
 VOLUME ["/app/data/raw", "/app/artifacts", "/app/runtime"]
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+ENTRYPOINT ["bash", "/usr/local/bin/entrypoint.sh"]
 CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]

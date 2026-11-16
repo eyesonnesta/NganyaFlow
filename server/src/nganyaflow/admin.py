@@ -7,6 +7,7 @@ import os
 import secrets
 import threading
 import time
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
 from urllib.parse import parse_qs
@@ -16,6 +17,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
+from . import access
 from .admin_ui import document, escape, render_dashboard, render_login
 from .datasets import validate_bundle
 from .ml import NAIROBI, timestamp, train
@@ -346,5 +348,95 @@ def admin_router(app):
         finally:
             app.state.training_lock.release()
         return RedirectResponse("/admin", status_code=303)
+
+    def access_page(new_code=None, error=""):
+        rows = app.state.store.codes()
+        now = datetime.now(UTC)
+
+        def state(row):
+            if row["revoked"]:
+                return "Revoked"
+            return "Expired" if datetime.fromisoformat(row["expires_at"]) <= now else "Active"
+
+        body = (
+            "".join(
+                f"<tr><td>{escape(r['label'])}</td><td>{escape(r['role'])}</td>"
+                f"<td>{state(r)}</td><td>{escape(r['expires_at'][:16].replace('T', ' '))} UTC</td><td>"
+                + (
+                    f'<form method="post" action="/admin/access/{r["id"]}/revoke">'
+                    f'<input type="hidden" name="csrf" value="{app.state.admin_csrf}">'
+                    '<button class="button">Revoke</button></form>'
+                    if state(r) == "Active"
+                    else ""
+                )
+                + "</td></tr>"
+                for r in rows
+            )
+            or '<tr><td colspan="5">No access codes yet.</td></tr>'
+        )
+        banner = (
+            f'<section class="panel"><div class="panel-body"><h2>New access code</h2>'
+            f'<p style="font-size:28px;letter-spacing:2px"><strong>{escape(new_code)}</strong></p>'
+            "<p>Copy it now. Only a hash is stored, so it cannot be shown again.</p></div></section>"
+            if new_code
+            else ""
+        )
+        problem = f'<p role="alert">{escape(error)}</p>' if error else ""
+        return HTMLResponse(
+            document(
+                "Access codes · NganyaFlow",
+                f'''<main class="content" style="max-width:1000px"><a class="button" href="/admin">← Overview</a>
+        <div class="page-heading" style="margin-top:28px"><div><p class="eyebrow">ACCESS</p>
+        <h1>Access codes</h1><p class="subtitle">Enumerators and crew sign in to the app with a code. Riders need none.</p></div></div>
+        {banner}{problem}
+        <section class="panel" style="margin-top:22px"><div class="panel-body"><h2>Create a code</h2>
+        <form method="post" action="/admin/access"><input type="hidden" name="csrf" value="{app.state.admin_csrf}">
+        <p><label>Role <select name="role"><option value="enumerator">Enumerator (records observations)</option>
+        <option value="crew">Crew (views demand)</option></select></label></p>
+        <p><label>Label <input name="label" maxlength="60" required placeholder="e.g. Kasarani team"></label></p>
+        <p><label>Valid for (days) <input name="days" type="number" min="1" max="365" value="14"></label></p>
+        <p><label>Custom code (optional) <input name="code" maxlength="20" placeholder="leave blank to generate"></label></p>
+        <button class="button primary">Create access code</button></form></div></section>
+        <section class="panel" style="margin-top:22px"><div class="panel-body"><h2>Existing codes</h2>
+        <table style="width:100%;text-align:left"><tr><th>Label</th><th>Role</th><th>Status</th><th>Expires</th><th></th></tr>{body}</table>
+        </div></section></main>''',
+            ),
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @router.get("/access", response_class=HTMLResponse, dependencies=[Depends(authenticate)])
+    def access_form():
+        return access_page()
+
+    @router.post("/access", dependencies=[Depends(authenticate), Depends(csrf)])
+    async def create_access(request: Request):
+        values = await form_values(request)
+        role = values.get("role", [""])[0]
+        label = values.get("label", [""])[0].strip()
+        custom = values.get("code", [""])[0].strip()
+        try:
+            days = int(values.get("days", ["14"])[0])
+        except ValueError:
+            return access_page(error="Days must be a whole number.")
+        if role not in access.ROLES or not label or not 1 <= days <= 365:
+            return access_page(error="Choose a role, a label and 1 to 365 days.")
+        if custom and len(access.normalize(custom)) < 6:
+            return access_page(error="A custom code needs at least six letters or digits.")
+        code = custom or access.generate_code()
+        try:
+            app.state.store.add_code(
+                access.hash_code(code), role, label, datetime.now(UTC) + timedelta(days=days)
+            )
+        except Conflict as exc:
+            return access_page(error=str(exc))
+        return access_page(new_code=code)
+
+    @router.post("/access/{code_id}/revoke", dependencies=[Depends(authenticate), Depends(csrf)])
+    def revoke_access(code_id: int):
+        try:
+            app.state.store.revoke_code(code_id)
+        except KeyError as exc:
+            raise HTTPException(404, "Unknown access code") from exc
+        return RedirectResponse("/admin/access", status_code=303)
 
     return router

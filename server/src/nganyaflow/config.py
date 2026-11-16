@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     max_model_age_days: int = Field(default=30, ge=1)
     min_recent_arrivals: int = Field(default=3, ge=2)
     runtime_dir: Path = Path("runtime")
+    consent_version: str = "2026-11-v1"
+    token_ttl_hours: int = Field(default=12, ge=1, le=168)
+    min_reports_for_demand: int = Field(default=5, ge=1)
+    # Keeps clearly labelled synthetic arrivals flowing so a demo always has live estimates.
+    demo_mode: bool = False
 
     def resolve(self, path: Path) -> Path:
         return path if path.is_absolute() else SERVER_ROOT / path

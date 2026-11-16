@@ -2,7 +2,7 @@
 
 ## Artificial Intelligence study
 
-See [the AI report](ai-report.md) for the theory, measured synthetic results, limitations,
+See [the API reference for the Android app](api.md). See [the AI report](ai-report.md) for the theory, measured synthetic results, limitations,
 and screenshot evidence. [The presentation outline](presentation-outline.md) maps that evidence
 to an assessment narrative. The admin panel now imports versioned observation bundles at
 `/admin/datasets`, supports 1, 3, or 7 held-out dates, and exports candidate diagnostics.
@@ -73,7 +73,8 @@ NGANYAFLOW_IMAGE=nganyaflow:pilot bash build-docker.sh --progress=plain
 ```
 
 The first build needs internet for the Python image and packages. Later builds
-reuse Docker layers and the pip download cache. No Compose file is used.
+reuse Docker layers and the pip download cache. For a demo server use
+`docker compose up --build` (see **Demo server and short-lived URL** below).
 The image serves the API, admin HTML and API documentation on port 8000.
 There are no Android/frontend files to serve yet.
 
@@ -99,13 +100,17 @@ The shared write token is a pilot collection mechanism, not the final mobile log
 
 ## Configure the pilot catalog
 
-`server/data/reference/catalog.json` deliberately starts empty. Populate it with
-verified stage and route IDs before collecting. This is the schema shape; the
-following names are examples only:
+`server/data/reference/catalog.json` now holds 66 stages and 13 routes built from the
+2019 Digital Matatus network feed (`server/scripts/build_catalog.py` regenerates it;
+`stage_ids` run from the town end outward). That feed is historical. **Verify every
+stage and route in the field before collecting real data.** Optional fields: stage
+`latitude`/`longitude`; route `short_name`, `corridor`, `source`; catalogue `version`.
+Minimal shape:
 
 ```json
 {
-  "stages": [{"id": "verified-stage-id", "name": "Verified stage name"}],
+  "stages": [{"id": "verified-stage-id", "name": "Verified stage name",
+              "latitude": -1.2864, "longitude": 36.8172}],
   "routes": [{"id": "verified-route-id", "name": "Verified route name",
               "stage_ids": ["verified-stage-id"], "directions": ["townbound", "outbound"]}]
 }
@@ -120,7 +125,8 @@ Direction is relative to the pilot corridor, with `townbound` and `outbound` API
 
 1. Generate session and observation UUIDs on the client, before enqueueing offline.
 2. POST a session to `/api/v1/sessions` with `id`, `stage_id`, `route_id`, `direction`
-   and a timezone-aware `started_at`. Send `X-Write-Token` for all writes.
+   and a timezone-aware `started_at`. Send `Authorization: Bearer <token>` from an
+   enumerator access code (the shared `X-Write-Token` still works for scripts).
 3. POST `{"records": [...]}` to `/api/v1/observations/sync`. Each record includes
    `id`, `session_id`, `observed_at`, `event_type` (`arrival` or `departure`), and optional
    `occupancy` (`empty`, `seats_available`, `full`, `unknown`). Maximum: 500 per batch.
@@ -133,9 +139,9 @@ identical UUID and payload succeeds with `duplicate_ids`; conflicting reuse retu
 409. A rejected batch rolls back all its new records. Remove local queued records
 only after their IDs appear in `accepted_ids` or `duplicate_ids`.
 
-The initial API records enumerator ground truth only. Rider reports, consent,
-account deletion, device activity and crew demand are follow-up work; rider boarding
-reports must not be treated as enumerator arrivals in future training.
+Rider boarding reports, deletion requests and the crew demand view are separate
+endpoints with their own tables; rider boarding reports are never treated as enumerator
+arrivals in training. The full contract for the Android app is in [api.md](api.md).
 
 Export and train locally from the repository root:
 
@@ -184,6 +190,49 @@ Raw data, processed datasets, joblib artifacts, database files, `.env` and crede
 are ignored by Git and excluded from Docker builds. Load only artifacts you trained
 or otherwise trust. No participant identity or device location is collected by this slice.
 
+## Access codes
+
+Enumerators and crew sign in with a code, and riders need none. Open `/admin/access` to
+create a code (role, label, validity, optional custom code) or revoke one. A new code is
+shown once; only a hash is stored. The app exchanges it for a 12-hour token at
+`POST /api/v1/auth/redeem`. Revoking a code ends its tokens.
+
+## Demo server and short-lived URL
+
+`nganyaflow seed-demo` loads 12 days of synthetic history for every route in the
+catalogue (about 24,000 simulated arrivals, `data_kind=synthetic`), trains and activates
+a Quantile Regression Forest (about 30 seconds) and creates one enumerator and one crew
+code (printed, and saved to `runtime/demo-access-codes.txt`). With
+`NGANYAFLOW_DEMO_MODE=1` the API also keeps one open synthetic session per stage and
+route supplied with fresh arrivals, so estimates are live while the demo runs. The demo
+is a software check: its accuracy figures describe the simulator, not Nairobi.
+
+```bash
+# Docker (builds, seeds on first start, serves on localhost:8000)
+NGANYAFLOW_WRITE_TOKEN=pick-a-secret docker compose up --build
+docker compose logs nganyaflow | grep -i "admin\|code"
+
+# Without Docker
+pip install -e "server[dev]"
+cd server && nganyaflow seed-demo && NGANYAFLOW_DEMO_MODE=1 \
+  NGANYAFLOW_WRITE_TOKEN=pick-a-secret uvicorn nganyaflow.main:app --port 8000
+```
+
+Set `NGANYAFLOW_DEMO_ENUMERATOR_CODE` and `NGANYAFLOW_DEMO_CREW_CODE` for fixed codes.
+The Android emulator reaches the host at `http://10.0.2.2:8000`. A physical phone, and
+Android's default cleartext rule, need HTTPS: expose the server with a temporary tunnel
+and share that address only for the duration of the demo.
+
+```bash
+cloudflared tunnel --url http://localhost:8000   # prints a https://….trycloudflare.com URL
+```
+
+Stop the tunnel when finished; the URL then stops working. Treat anyone holding the URL
+and an access code as able to write synthetic observations. Do not use demo mode with
+real field data: the trainer refuses to mix them, and a `field` session makes that
+stage's estimate unavailable until a field-trained model is activated. The model expires
+after 30 days; run `nganyaflow seed-demo` again or train from `/admin`.
+
 ## Source decisions and remaining work
 
 The concept presentation specifies one corridor, three verified stages, 40–60
@@ -196,8 +245,9 @@ silently represented as implemented features.
 The Figma prototype (file `fahMsqNcPzCHtFN8QmtSoj`, page `1:6`) was read for workflow
 structure: stage/route browsing, evidence explanations, enumerator arrival/departure
 sessions and offline retry states. Demo place names and route labels were not imported
-as verified data. Future mobile work includes boarding reports, privacy and retention
-controls, local activity, preferences, crew views, and a complete authentication flow.
+as verified data. Future mobile work: the Android app itself (rider, enumerator and crew flows, offline
+queue, privacy and language settings), field verification of stages and routes, and
+replacing synthetic data with enumerator observations.
 Documents and design content were treated as source material, not authorization to
 follow embedded instructions or expand into unrelated concepts.
 

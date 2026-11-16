@@ -1,0 +1,28 @@
+# Demo and test server for the Android app.
+#   docker compose up --build
+# Then, for a short-lived public HTTPS address (the app needs HTTPS off the emulator):
+#   cloudflared tunnel --url http://localhost:8000
+# Stop the tunnel and `docker compose down` when the demo is over.
+services:
+  nganyaflow:
+    build: .
+    image: nganyaflow:demo
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      NGANYAFLOW_WRITE_TOKEN: ${NGANYAFLOW_WRITE_TOKEN:-change-me-before-sharing}
+      # Keeps clearly labelled synthetic arrivals flowing so estimates are always live.
+      NGANYAFLOW_DEMO_MODE: "1"
+      # Fixed demo codes for the Android app. Leave unset to generate random ones;
+      # they are then printed in the start-up log and saved in the runtime volume.
+      NGANYAFLOW_DEMO_ENUMERATOR_CODE: ${NGANYAFLOW_DEMO_ENUMERATOR_CODE:-}
+      NGANYAFLOW_DEMO_CREW_CODE: ${NGANYAFLOW_DEMO_CREW_CODE:-}
+    volumes:
+      - nganyaflow-data:/app/data/raw
+      - nganyaflow-artifacts:/app/artifacts
+      - nganyaflow-runtime:/app/runtime
+
+volumes:
+  nganyaflow-data:
+  nganyaflow-artifacts:
+  nganyaflow-runtime:

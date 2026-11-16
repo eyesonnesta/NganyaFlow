@@ -1,16 +1,402 @@
 {
+  "version": "2026.11-network-1",
+  "attribution": "Stage names, coordinates and route numbers: Digital Matatus 2019 GTFS feed (digitalmatatus.com), a historical mapped network. Arrival times served with this catalogue are simulated unless a model report says otherwise.",
   "stages": [
     {
+      "id": "abc-place",
+      "name": "ABC Place",
+      "latitude": -1.259077,
+      "longitude": 36.778708
+    },
+    {
+      "id": "adams-arcade",
+      "name": "Adams Arcade",
+      "latitude": -1.300006,
+      "longitude": 36.780041
+    },
+    {
+      "id": "allsops",
+      "name": "Allsops",
+      "latitude": -1.245897,
+      "longitude": 36.866598
+    },
+    {
+      "id": "belleview",
+      "name": "Belleview",
+      "latitude": -1.319454,
+      "longitude": 36.837609
+    },
+    {
+      "id": "bomas",
+      "name": "Bomas",
+      "latitude": -1.341678,
+      "longitude": 36.768579
+    },
+    {
+      "id": "bulbul",
+      "name": "Bulbul",
+      "latitude": -1.334184,
+      "longitude": 36.673252
+    },
+    {
+      "id": "buruburu",
+      "name": "Buruburu",
+      "latitude": -1.277407,
+      "longitude": 36.877643
+    },
+    {
+      "id": "bus-station",
+      "name": "Bus Station",
+      "latitude": -1.287187,
+      "longitude": 36.83026
+    },
+    {
+      "id": "cabanas",
+      "name": "Cabanas",
+      "latitude": -1.335821,
+      "longitude": 36.892278
+    },
+    {
+      "id": "chiromo",
+      "name": "Chiromo",
+      "latitude": -1.270144,
+      "longitude": 36.80715
+    },
+    {
+      "id": "city-stadium",
+      "name": "City Stadium",
+      "latitude": -1.292439,
+      "longitude": 36.842582
+    },
+    {
+      "id": "congo",
+      "name": "Congo",
+      "latitude": -1.289252,
+      "longitude": 36.753141
+    },
+    {
+      "id": "donholm",
+      "name": "Donholm",
+      "latitude": -1.296709,
+      "longitude": 36.884226
+    },
+    {
+      "id": "fedha",
+      "name": "Fedha",
+      "latitude": -1.314712,
+      "longitude": 36.894037
+    },
+    {
+      "id": "general-motors",
+      "name": "General Motors (GM)",
+      "latitude": -1.330258,
+      "longitude": 36.870627
+    },
+    {
+      "id": "githurai",
+      "name": "Githurai",
+      "latitude": -1.203686,
+      "longitude": 36.917332
+    },
+    {
+      "id": "gpo",
+      "name": "GPO",
+      "latitude": -1.285926,
+      "longitude": 36.818372
+    },
+    {
+      "id": "hamza",
+      "name": "Hamza",
+      "latitude": -1.297385,
+      "longitude": 36.874731
+    },
+    {
+      "id": "hurlingham",
+      "name": "Hurlingham",
+      "latitude": -1.294756,
+      "longitude": 36.798373
+    },
+    {
+      "id": "james-gichuru",
+      "name": "James Gichuru",
+      "latitude": -1.259215,
+      "longitude": 36.774992
+    },
+    {
+      "id": "jkia",
+      "name": "JKIA",
+      "latitude": -1.332189,
+      "longitude": 36.926358
+    },
+    {
+      "id": "juja",
+      "name": "Juja",
+      "latitude": -1.118052,
+      "longitude": 37.010472
+    },
+    {
+      "id": "junction",
+      "name": "Junction (Dagoretti Corner)",
+      "latitude": -1.299031,
+      "longitude": 36.762577
+    },
+    {
+      "id": "kangemi",
+      "name": "Kangemi",
+      "latitude": -1.26498,
+      "longitude": 36.74953
+    },
+    {
+      "id": "karen",
+      "name": "Karen",
+      "latitude": -1.322039,
+      "longitude": 36.70757
+    },
+    {
+      "id": "kasarani-seasons",
+      "name": "Kasarani Seasons",
+      "latitude": -1.218752,
+      "longitude": 36.902593
+    },
+    {
+      "id": "kawangware",
+      "name": "Kawangware",
+      "latitude": -1.283934,
+      "longitude": 36.742585
+    },
+    {
       "id": "kencom",
-      "name": "Kencom bus stage"
+      "name": "Kencom bus stage",
+      "latitude": -1.284634,
+      "longitude": 36.82614
+    },
+    {
+      "id": "kenyatta-university",
+      "name": "Kenyatta University (KU)",
+      "latitude": -1.182017,
+      "longitude": 36.937859
+    },
+    {
+      "id": "kiambu",
+      "name": "Kiambu Town",
+      "latitude": -1.168987,
+      "longitude": 36.826301
+    },
+    {
+      "id": "kikuyu",
+      "name": "Kikuyu Town",
+      "latitude": -1.246669,
+      "longitude": 36.665068
+    },
+    {
+      "id": "kinoo",
+      "name": "Kinoo",
+      "latitude": -1.25536,
+      "longitude": 36.69366
+    },
+    {
+      "id": "kirigiti",
+      "name": "Kirigiti",
+      "latitude": -1.17895,
+      "longitude": 36.83748
+    },
+    {
+      "id": "kitengela",
+      "name": "Kitengela",
+      "latitude": -1.47715,
+      "longitude": 36.957852
+    },
+    {
+      "id": "knh",
+      "name": "Kenyatta National Hospital",
+      "latitude": -1.297647,
+      "longitude": 36.804167
+    },
+    {
+      "id": "koja",
+      "name": "Koja",
+      "latitude": -1.281126,
+      "longitude": 36.822757
+    },
+    {
+      "id": "langata-barracks",
+      "name": "Langata Barracks",
+      "latitude": -1.331629,
+      "longitude": 36.783604
+    },
+    {
+      "id": "madaraka",
+      "name": "Madaraka",
+      "latitude": -1.30674,
+      "longitude": 36.818715
+    },
+    {
+      "id": "makadara",
+      "name": "Makadara",
+      "latitude": -1.296655,
+      "longitude": 36.862151
+    },
+    {
+      "id": "mlolongo",
+      "name": "Mlolongo",
+      "latitude": -1.400073,
+      "longitude": 36.943057
+    },
+    {
+      "id": "multimedia-university",
+      "name": "Multimedia University",
+      "latitude": -1.382143,
+      "longitude": 36.770575
+    },
+    {
+      "id": "museum-hill",
+      "name": "Museum Hill",
+      "latitude": -1.274128,
+      "longitude": 36.811825
+    },
+    {
+      "id": "muthaiga",
+      "name": "Muthaiga",
+      "latitude": -1.260445,
+      "longitude": 36.843617
+    },
+    {
+      "id": "muthaiga-golf-club",
+      "name": "Muthaiga Golf Club",
+      "latitude": -1.258875,
+      "longitude": 36.842541
+    },
+    {
+      "id": "mutindwa",
+      "name": "Mutindwa",
+      "latitude": -1.286286,
+      "longitude": 36.880948
+    },
+    {
+      "id": "mwiki",
+      "name": "Mwiki",
+      "latitude": -1.233935,
+      "longitude": 36.930523
+    },
+    {
+      "id": "ngara",
+      "name": "Ngara",
+      "latitude": -1.274688,
+      "longitude": 36.824407
+    },
+    {
+      "id": "ngong",
+      "name": "Ngong Town",
+      "latitude": -1.360429,
+      "longitude": 36.656037
+    },
+    {
+      "id": "nyayo-stadium",
+      "name": "Nyayo Stadium",
+      "latitude": -1.305292,
+      "longitude": 36.824734
     },
     {
       "id": "odeon",
-      "name": "Odeon bus stage"
+      "name": "Odeon bus stage",
+      "latitude": -1.282831,
+      "longitude": 36.824922
+    },
+    {
+      "id": "ongata-rongai",
+      "name": "Ongata Rongai",
+      "latitude": -1.395274,
+      "longitude": 36.763639
+    },
+    {
+      "id": "otc",
+      "name": "OTC",
+      "latitude": -1.286141,
+      "longitude": 36.830667
+    },
+    {
+      "id": "racecourse",
+      "name": "Racecourse",
+      "latitude": -1.306525,
+      "longitude": 36.738683
     },
     {
       "id": "railways",
-      "name": "Railways area at Nairobi Central Station"
+      "name": "Railways area at Nairobi Central Station",
+      "latitude": -1.290884,
+      "longitude": 36.828242
+    },
+    {
+      "id": "ridgeways",
+      "name": "Ridgeways",
+      "latitude": -1.22544,
+      "longitude": 36.839
+    },
+    {
+      "id": "roysambu",
+      "name": "Roysambu (TRM)",
+      "latitude": -1.220374,
+      "longitude": 36.891089
+    },
+    {
+      "id": "strathmore",
+      "name": "Strathmore University",
+      "latitude": -1.308666,
+      "longitude": 36.812439
+    },
+    {
+      "id": "sunton",
+      "name": "Sunton",
+      "latitude": -1.229605,
+      "longitude": 36.920967
+    },
+    {
+      "id": "syokimau",
+      "name": "Syokimau",
+      "latitude": -1.379645,
+      "longitude": 36.928056
+    },
+    {
+      "id": "t-mall",
+      "name": "T-Mall",
+      "latitude": -1.311276,
+      "longitude": 36.816904
+    },
+    {
+      "id": "thika-town",
+      "name": "Thika Town",
+      "latitude": -1.035427,
+      "longitude": 37.076427
+    },
+    {
+      "id": "thindigwa",
+      "name": "Thindigwa",
+      "latitude": -1.19987,
+      "longitude": 36.83525
+    },
+    {
+      "id": "uthiru",
+      "name": "Uthiru",
+      "latitude": -1.260799,
+      "longitude": 36.71692
+    },
+    {
+      "id": "valley-arcade",
+      "name": "Valley Arcade",
+      "latitude": -1.289983,
+      "longitude": 36.770481
+    },
+    {
+      "id": "westlands",
+      "name": "Westlands",
+      "latitude": -1.265439,
+      "longitude": 36.802804
+    },
+    {
+      "id": "yaya",
+      "name": "Yaya Centre",
+      "latitude": -1.292396,
+      "longitude": 36.788124
     }
   ],
   "routes": [
@@ -24,7 +410,246 @@
       ],
       "directions": [
         "townbound"
-      ]
+      ],
+      "source": "simulated"
+    },
+    {
+      "id": "237-thika",
+      "name": "Thika \u2013 Koja",
+      "short_name": "237",
+      "corridor": "Thika Road",
+      "stage_ids": [
+        "koja",
+        "ngara",
+        "muthaiga",
+        "allsops",
+        "roysambu",
+        "githurai",
+        "kenyatta-university",
+        "juja",
+        "thika-town"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "17b-kasarani",
+      "name": "Mwiki \u2013 Bus Station",
+      "short_name": "17B",
+      "corridor": "Thika Road",
+      "stage_ids": [
+        "bus-station",
+        "muthaiga",
+        "allsops",
+        "roysambu",
+        "kasarani-seasons",
+        "sunton",
+        "mwiki"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "100-kiambu",
+      "name": "Kiambu \u2013 OTC",
+      "short_name": "100",
+      "corridor": "Kiambu Road",
+      "stage_ids": [
+        "otc",
+        "muthaiga-golf-club",
+        "ridgeways",
+        "thindigwa",
+        "kirigiti",
+        "kiambu"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "111-ngong",
+      "name": "Ngong \u2013 Railways",
+      "short_name": "111",
+      "corridor": "Ngong Road",
+      "stage_ids": [
+        "railways",
+        "knh",
+        "adams-arcade",
+        "junction",
+        "racecourse",
+        "karen",
+        "bulbul",
+        "ngong"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "125-rongai",
+      "name": "Ongata Rongai \u2013 Railways",
+      "short_name": "125",
+      "corridor": "Langata Road",
+      "stage_ids": [
+        "railways",
+        "nyayo-stadium",
+        "t-mall",
+        "langata-barracks",
+        "bomas",
+        "multimedia-university",
+        "ongata-rongai"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "23-kangemi",
+      "name": "Kangemi \u2013 Odeon",
+      "short_name": "23",
+      "corridor": "Waiyaki Way",
+      "stage_ids": [
+        "odeon",
+        "museum-hill",
+        "chiromo",
+        "westlands",
+        "james-gichuru",
+        "kangemi"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "105-kikuyu",
+      "name": "Kikuyu \u2013 Odeon",
+      "short_name": "105",
+      "corridor": "Waiyaki Way",
+      "stage_ids": [
+        "odeon",
+        "museum-hill",
+        "westlands",
+        "abc-place",
+        "kangemi",
+        "uthiru",
+        "kinoo",
+        "kikuyu"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "58-buruburu",
+      "name": "Buruburu \u2013 Kencom",
+      "short_name": "58",
+      "corridor": "Jogoo Road",
+      "stage_ids": [
+        "kencom",
+        "city-stadium",
+        "makadara",
+        "hamza",
+        "mutindwa",
+        "buruburu"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "34-jkia",
+      "name": "JKIA \u2013 Kencom",
+      "short_name": "34",
+      "corridor": "Jogoo Road",
+      "stage_ids": [
+        "kencom",
+        "city-stadium",
+        "makadara",
+        "donholm",
+        "fedha",
+        "cabanas",
+        "jkia"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "110-kitengela",
+      "name": "Kitengela \u2013 Railways",
+      "short_name": "110",
+      "corridor": "Mombasa Road",
+      "stage_ids": [
+        "railways",
+        "nyayo-stadium",
+        "belleview",
+        "general-motors",
+        "syokimau",
+        "mlolongo",
+        "kitengela"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "46-kawangware",
+      "name": "Kawangware \u2013 Kencom",
+      "short_name": "46",
+      "corridor": "Valley Road",
+      "stage_ids": [
+        "kencom",
+        "gpo",
+        "hurlingham",
+        "yaya",
+        "valley-arcade",
+        "congo",
+        "kawangware"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
+    },
+    {
+      "id": "14a-strathmore",
+      "name": "Strathmore \u2013 Bus Station",
+      "short_name": "14A",
+      "corridor": "Langata Road",
+      "stage_ids": [
+        "bus-station",
+        "nyayo-stadium",
+        "madaraka",
+        "strathmore"
+      ],
+      "directions": [
+        "townbound",
+        "outbound"
+      ],
+      "source": "digital-matatus-2019"
     }
   ]
 }

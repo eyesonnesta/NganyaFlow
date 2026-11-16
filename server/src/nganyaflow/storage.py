@@ -1,7 +1,10 @@
 import json
 import sqlite3
 from contextlib import contextmanager
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+
+DAILY_REPORT_LIMIT = 300
 
 
 class Conflict(ValueError):
@@ -23,6 +26,27 @@ class Store:
                     UNIQUE(session_id, observed_at, event_type)
                 );
                 CREATE INDEX IF NOT EXISTS observation_session ON observations(session_id);
+                CREATE TABLE IF NOT EXISTS access_codes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, code_hash TEXT NOT NULL UNIQUE,
+                    role TEXT NOT NULL, label TEXT NOT NULL, created_at TEXT NOT NULL,
+                    expires_at TEXT NOT NULL, revoked INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE TABLE IF NOT EXISTS tokens (
+                    token_hash TEXT PRIMARY KEY, code_id INTEGER NOT NULL REFERENCES access_codes(id),
+                    role TEXT NOT NULL, device_name TEXT, expires_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS reports (
+                    id TEXT PRIMARY KEY, install_id TEXT NOT NULL, stage_id TEXT NOT NULL,
+                    route_id TEXT NOT NULL, direction TEXT NOT NULL, boarded_at TEXT NOT NULL,
+                    consent_version TEXT NOT NULL, received_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS report_install ON reports(install_id);
+                CREATE INDEX IF NOT EXISTS report_scope ON reports(route_id, direction, boarded_at);
+                CREATE TABLE IF NOT EXISTS deletion_requests (
+                    id TEXT PRIMARY KEY, install_id TEXT NOT NULL, requested_at TEXT NOT NULL,
+                    completed_at TEXT, reports_deleted INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE INDEX IF NOT EXISTS deletion_install ON deletion_requests(install_id);
             """)
 
     @contextmanager
@@ -159,3 +183,216 @@ class Store:
             "duplicate_observations": duplicates,
             "sessions": len(sessions),
         }
+
+    # ---- observations by scope -------------------------------------------------
+
+    def arrivals_for(self, group):
+        """Arrival events of one stage/route/direction, across all sessions."""
+        stage_id, route_id, direction = group
+        with self.connect() as db:
+            rows = db.execute(
+                """
+                SELECT o.payload AS event, s.payload AS session FROM observations o
+                JOIN sessions s ON o.session_id=s.id
+                WHERE o.event_type='arrival'
+                  AND json_extract(s.payload,'$.stage_id')=?
+                  AND json_extract(s.payload,'$.route_id')=?
+                  AND json_extract(s.payload,'$.direction')=?
+                """,
+                (stage_id, route_id, direction),
+            ).fetchall()
+        return [dict(json.loads(r["session"]), **json.loads(r["event"])) for r in rows]
+
+    def arrivals_for_route(self, route_id, direction):
+        with self.connect() as db:
+            rows = db.execute(
+                """
+                SELECT o.payload AS event, s.payload AS session FROM observations o
+                JOIN sessions s ON o.session_id=s.id
+                WHERE o.event_type='arrival'
+                  AND json_extract(s.payload,'$.route_id')=?
+                  AND json_extract(s.payload,'$.direction')=?
+                """,
+                (route_id, direction),
+            ).fetchall()
+        return [dict(json.loads(r["session"]), **json.loads(r["event"])) for r in rows]
+
+    # ---- access codes and tokens -----------------------------------------------
+
+    def add_code(self, code_hash, role, label, expires_at):
+        with self.connect() as db:
+            try:
+                cursor = db.execute(
+                    "INSERT INTO access_codes(code_hash,role,label,created_at,expires_at)"
+                    " VALUES (?,?,?,?,?)",
+                    (code_hash, role, label, _now(), expires_at.astimezone(UTC).isoformat()),
+                )
+            except sqlite3.IntegrityError as exc:
+                raise Conflict("That access code already exists") from exc
+            return cursor.lastrowid
+
+    def codes(self):
+        with self.connect() as db:
+            return [
+                dict(r)
+                for r in db.execute(
+                    "SELECT id,role,label,created_at,expires_at,revoked FROM access_codes"
+                    " ORDER BY id DESC"
+                ).fetchall()
+            ]
+
+    def has_codes(self):
+        with self.connect() as db:
+            return db.execute("SELECT 1 FROM access_codes LIMIT 1").fetchone() is not None
+
+    def revoke_code(self, code_id):
+        with self.connect() as db:
+            changed = db.execute(
+                "UPDATE access_codes SET revoked=1 WHERE id=?", (code_id,)
+            ).rowcount
+            db.execute("DELETE FROM tokens WHERE code_id=?", (code_id,))
+        if not changed:
+            raise KeyError(code_id)
+
+    def redeem(self, code_hash, token_hash, token_ttl, device_name):
+        """Exchange a valid code for a token. Returns (role, expires_at) or None."""
+        now = datetime.now(UTC)
+        with self.connect() as db:
+            row = db.execute(
+                "SELECT id,role,expires_at,revoked FROM access_codes WHERE code_hash=?",
+                (code_hash,),
+            ).fetchone()
+            if not row or row["revoked"] or datetime.fromisoformat(row["expires_at"]) <= now:
+                return None
+            # A token never outlives its code.
+            expires = min(now + token_ttl, datetime.fromisoformat(row["expires_at"]))
+            db.execute("DELETE FROM tokens WHERE expires_at<=?", (now.isoformat(),))
+            db.execute(
+                "INSERT INTO tokens VALUES (?,?,?,?,?)",
+                (token_hash, row["id"], row["role"], device_name, expires.isoformat()),
+            )
+        return row["role"], expires
+
+    def token_role(self, token_hash):
+        now = datetime.now(UTC)
+        with self.connect() as db:
+            row = db.execute(
+                "SELECT t.role, t.expires_at, c.revoked, c.expires_at AS code_expires"
+                " FROM tokens t JOIN access_codes c ON c.id=t.code_id WHERE t.token_hash=?",
+                (token_hash,),
+            ).fetchone()
+        if not row or row["revoked"]:
+            return None
+        if datetime.fromisoformat(row["expires_at"]) <= now:
+            return None
+        if datetime.fromisoformat(row["code_expires"]) <= now:
+            return None
+        return row["role"]
+
+    # ---- rider boarding reports --------------------------------------------------
+
+    def add_reports(self, records):
+        accepted, duplicates, rejected = [], [], []
+        now = datetime.now(UTC)
+        with self.connect() as db:
+            for record in records:
+                ident, install = str(record.id), str(record.install_id)
+                old = db.execute("SELECT * FROM reports WHERE id=?", (ident,)).fetchone()
+                if old:
+                    same = (
+                        old["install_id"],
+                        old["stage_id"],
+                        old["route_id"],
+                        old["direction"],
+                        old["boarded_at"],
+                    ) == (
+                        install,
+                        record.stage_id,
+                        record.route_id,
+                        record.direction,
+                        record.boarded_at.isoformat(),
+                    )
+                    if not same:
+                        raise Conflict("Report ID reused with different content")
+                    duplicates.append(ident)
+                    continue
+                erased = db.execute(
+                    "SELECT 1 FROM deletion_requests WHERE install_id=? AND requested_at>=?",
+                    (install, record.boarded_at.isoformat()),
+                ).fetchone()
+                if erased:
+                    # Queued before the person asked for deletion: never resurrect it.
+                    rejected.append({"id": ident, "reason": "deleted_by_request"})
+                    continue
+                recent = db.execute(
+                    "SELECT COUNT(*) FROM reports WHERE install_id=? AND received_at>?",
+                    (install, (now - timedelta(days=1)).isoformat()),
+                ).fetchone()[0]
+                if recent >= DAILY_REPORT_LIMIT:
+                    rejected.append({"id": ident, "reason": "daily_limit"})
+                    continue
+                db.execute(
+                    "INSERT INTO reports VALUES (?,?,?,?,?,?,?,?)",
+                    (
+                        ident,
+                        install,
+                        record.stage_id,
+                        record.route_id,
+                        record.direction,
+                        record.boarded_at.isoformat(),
+                        record.consent_version,
+                        now.isoformat(),
+                    ),
+                )
+                accepted.append(ident)
+        return {"accepted_ids": accepted, "duplicate_ids": duplicates, "rejected": rejected}
+
+    def retract_report(self, report_id, install_id):
+        with self.connect() as db:
+            return bool(
+                db.execute(
+                    "DELETE FROM reports WHERE id=? AND install_id=?", (report_id, install_id)
+                ).rowcount
+            )
+
+    def delete_install(self, request_id, install_id):
+        """Erase every report of one install. Replaying the same request is safe."""
+        with self.connect() as db:
+            old = db.execute("SELECT * FROM deletion_requests WHERE id=?", (request_id,)).fetchone()
+            if old:
+                if old["install_id"] != install_id:
+                    raise Conflict("Deletion request ID reused for another installation")
+                return dict(old)
+            removed = db.execute("DELETE FROM reports WHERE install_id=?", (install_id,)).rowcount
+            now = _now()
+            db.execute(
+                "INSERT INTO deletion_requests VALUES (?,?,?,?,?)",
+                (request_id, install_id, now, now, removed),
+            )
+            return {
+                "id": request_id,
+                "install_id": install_id,
+                "requested_at": now,
+                "completed_at": now,
+                "reports_deleted": removed,
+            }
+
+    def deletion_status(self, request_id):
+        with self.connect() as db:
+            row = db.execute("SELECT * FROM deletion_requests WHERE id=?", (request_id,)).fetchone()
+        return dict(row) if row else None
+
+    def reports_for_route(self, route_id, direction, since):
+        with self.connect() as db:
+            return [
+                dict(r)
+                for r in db.execute(
+                    "SELECT stage_id, boarded_at FROM reports"
+                    " WHERE route_id=? AND direction=? AND boarded_at>=?",
+                    (route_id, direction, since.astimezone(UTC).isoformat()),
+                ).fetchall()
+            ]
+
+
+def _now():
+    return datetime.now(UTC).isoformat()

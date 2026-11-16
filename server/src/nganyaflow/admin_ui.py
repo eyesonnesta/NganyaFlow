@@ -345,7 +345,8 @@ def render_dashboard(
     <nav aria-label="Main navigation"><p class="nav-label">WORKSPACE</p>
     <a class="nav-item" href="#overview" aria-current="page">{icon("grid", 18)} Overview</a>
     <a class="nav-item" href="/admin/datasets">{icon("data", 18)} Observation datasets</a>
-    <a class="nav-item" href="#training">{icon("model", 18)} Model training</a></nav>
+    <a class="nav-item" href="#training">{icon("model", 18)} Model training</a>
+    <a class="nav-item" href="/admin/access">{icon("shield", 18)} Access codes</a></nav>
     <div class="resources"><p class="nav-label">RESOURCES</p>
     <a class="nav-item" href="/docs">{icon("external", 17)} API documentation</a>
     <a class="nav-item" href="/health">{icon("shield", 18)} Server health</a></div>

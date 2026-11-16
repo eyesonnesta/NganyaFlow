@@ -16,7 +16,8 @@ For a separate study of the downloaded network, open the
 The Python pilot backend, observation collection, model training and admin panel
 now live under `server/`. Start with [development and Docker instructions](docs/development.md).
 The root `Dockerfile` runs the server with supervisord; build it with
-`bash build-docker.sh`. The Android client is reserved under `apps/android/`.
+`bash build-docker.sh`, or run `docker compose up --build` for a self-seeding demo server.
+The [API reference](docs/api.md) is the contract for the Android app. The Android client is reserved under `apps/android/`.
 
 ```text
 apps/android/                 Future mobile application
