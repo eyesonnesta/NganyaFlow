@@ -1,0 +1,25 @@
+<resources>
+<string name="crew_title">Shughuli za njia</string>
+<string name="crew_participation">Abiria wanaoshiriki pekee</string>
+<string name="crew_disclaimer">Hesabu hizi ni za abiria wanaoripoti katika programu hii. Si idadi ya abiria wote wala mahitaji yote.</string>
+<string name="crew_access_required">Ingia kwa msimbo wa wahudumu. Misimbo ya waangalizi haiwezi kuona shughuli hizi.</string>
+<string name="crew_sign_in">Weka msimbo wa kuingia</string>
+<string name="crew_choose_route">Chagua njia</string>
+<string name="crew_townbound">Kuelekea mjini</string>
+<string name="crew_outbound">Kutoka mjini</string>
+<string name="crew_window">Dakika %1$d</string>
+<string name="crew_refresh">Onyesha upya</string>
+<string name="crew_no_data">Hakuna data</string>
+<string name="crew_as_of">Ilisasishwa %1$s · saa za Nairobi</string>
+<string name="crew_reports">Ripoti %1$d za kupanda</string>
+<string name="crew_arrivals">Magari %1$d yaliyoonekana</string>
+<string name="crew_ok">Ripoti za hivi karibuni</string>
+<string name="crew_limited">Data chache</string>
+<string name="crew_wait_available">Makadirio ya sasa yanapatikana</string>
+<string name="crew_wait_unavailable">Hakuna makadirio ya sasa</string>
+<string name="crew_crowding_time">Msongamano ulirekodiwa: %1$s</string>
+<string name="crew_last_arrival">Kuwasili kwa mwisho: %1$s</string>
+<string name="crew_unknown_time">Haikuonekana</string>
+<string name="crew_limits">Data chache ni ripoti chini ya %1$d. Hesabu zinaweza kukosa abiria wengi.</string>
+<string name="crew_no_advice">Hakuna pendekezo la kusubiri au kuondoka.</string>
+</resources>

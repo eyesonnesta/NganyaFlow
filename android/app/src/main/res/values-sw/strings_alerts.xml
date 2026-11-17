@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alerts_notification_title">Arifa yako ya kusubiri</string>
+    <string name="alerts_title">Arifa za kusubiri</string>
+    <string name="alerts_how_title">Arifa moja, hadi saa mbili</string>
+    <string name="alerts_how_detail">Hukagua mara kwa mara na kutoa arifa mara moja iwapo mwisho wa juu wa makadirio uko chini ya au sawa na kiwango chako. Android inaweza kuchelewesha ukaguzi au arifa. Gari au kiti hakijahakikishwa.</string>
+    <string name="alerts_failed">Arifa haikuhifadhiwa</string>
+    <string name="alerts_permission_title">Arifa hazijaruhusiwa</string>
+    <string name="alerts_permission_detail">Ruhusu arifa katika mipangilio ya kifaa ili kupokea arifa ya kusubiri. Unaweza kutazama bila arifa.</string>
+    <string name="alerts_open_settings">Fungua mipangilio ya arifa</string>
+    <string name="alerts_catalogue_needed">Pakia vituo na njia kwanza</string>
+    <string name="alerts_catalogue_detail">Unganisha mtandao mara moja ili kuchagua kituo na njia halali.</string>
+    <string name="alerts_refresh">Pakia orodha upya</string>
+    <string name="alerts_stage">Kituo</string>
+    <string name="alerts_route">Njia</string>
+    <string name="alerts_direction">Mwelekeo</string>
+    <string name="alerts_townbound">Kuelekea mjini</string>
+    <string name="alerts_outbound">Kutoka mjini</string>
+    <string name="alerts_threshold">Kiwango cha kusubiri kwa dakika</string>
+    <string name="alerts_threshold_detail">Chagua dakika 1–60. Makadirio yote lazima yawe chini ya kiwango hicho.</string>
+    <string name="alerts_replace">Badilisha arifa iliyowashwa</string>
+    <string name="alerts_enable">Washa arifa moja</string>
+    <string name="alerts_active">Arifa imewashwa</string>
+    <string name="alerts_fired">Arifa imetumwa</string>
+    <string name="alerts_expired">Muda wa arifa umeisha</string>
+    <string name="alerts_cancelled">Arifa imeghairiwa</string>
+    <string name="alerts_summary">Njia %1$s · %2$s · hadi dakika %3$d</string>
+    <string name="alerts_expires">Hujizima saa %1$s (Nairobi)</string>
+    <string name="alerts_original_server">Arifa hii hutumia seva yake ya awali: %1$s</string>
+    <string name="alerts_cancel">Ghairi arifa</string>
+    <string name="alerts_choose">Chagua</string>
+    <string name="alerts_channel">Arifa za kusubiri</string>
+    <string name="alerts_notification_text">%1$s katika %2$s: gari linalofuata %3$s. Viti havijahakikishwa.</string>
+    <string name="alerts_demo_suffix"> Data za majaribio.</string>
+</resources>

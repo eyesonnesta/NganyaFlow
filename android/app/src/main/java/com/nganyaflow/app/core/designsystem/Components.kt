@@ -34,6 +34,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.animation.animateContentSize
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -93,7 +95,7 @@ fun CrowdingChip(occupancy: String, modifier: Modifier = Modifier) {
 fun RangeBar(lower: Double, median: Double, upper: Double, modifier: Modifier = Modifier) {
     val band = MaterialTheme.colorScheme.primary
     val track = MaterialTheme.colorScheme.outlineVariant
-    val description = stringResource(R.string.range_semantics, waitNumber(lower), waitNumber(upper), waitNumber(median))
+    val description = formatWaitRange(lower, upper, language = LocalConfiguration.current.locales[0].language)
     Canvas(modifier.fillMaxWidth().height(28.dp).clearAndSetSemantics { contentDescription = description }) {
         val y = size.height / 2
         val start = 8.dp.toPx()
@@ -113,13 +115,12 @@ fun RangeHero(lower: Double, median: Double, upper: Double, modifier: Modifier =
     Column(modifier) {
         Text(stringResource(R.string.next_vehicle), style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("${waitNumber(low.toDouble())}–${waitNumber(high.toDouble())}",
-                style = MaterialTheme.typography.displaySmall.copy(fontSize = 48.sp, lineHeight = 56.sp),
+        Row(Modifier.animateContentSize(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(formatWaitRange(lower, upper, language = LocalConfiguration.current.locales[0].language),
+                style = MaterialTheme.typography.displaySmall.copy(fontSize = 40.sp, lineHeight = 48.sp),
                 fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-            Text(stringResource(R.string.min), Modifier.padding(bottom = 7.dp), style = MaterialTheme.typography.titleMedium)
         }
-        RangeBar(lower, median, upper)
+        RangeBar(low.toDouble(), median, high.toDouble())
     }
 }
 
@@ -151,8 +152,8 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
 }
 
 @Composable
-fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    OutlinedButton(onClick, modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(text) }
+fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    OutlinedButton(onClick, modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = enabled) { Text(text) }
 }
 
 @Composable

@@ -155,14 +155,32 @@ class NganyaRepository(
         val route = cacheNow<List<Route>>(settings.value.serverUrl, "routes")?.find { it.id == routeId }
         require(route != null && stageId in route.stageIds && direction in route.servedDirections(stageId)) { "Choose a route and direction that can be boarded here." }
     }
-    suspend fun saveReport(stageId: String, routeId: String, direction: String): String = withContext(Dispatchers.IO) {
+    suspend fun saveReport(
+        stageId: String, routeId: String, direction: String,
+        reportId: String? = null, boardedAt: String? = null,
+        expectedServer: String? = null, expectedInstallId: String? = null,
+    ): String = withContext(Dispatchers.IO) {
         initialize(); operations.withLock {
-            validateScope(stageId, routeId, direction)
             val server = settings.value.serverUrl
+            require(expectedServer == null || expectedServer == server) { "The server changed. Review this report again." }
+            val install = requireNotNull(dao.identity(server)).installId
+            require(expectedInstallId == null || expectedInstallId == install) { "Your data choices changed. Start this report again." }
+            val id = reportId ?: uuid()
+            UUID.fromString(id)
+            val existing = dao.record(server, id)
+            if(existing != null) {
+                require(existing.kind == "report") { "This identifier is already in use." }
+                val saved = WireJson.decodeFromString<BoardingReport>(existing.payload)
+                require(saved.installId == install && saved.stageId == stageId && saved.routeId == routeId && saved.direction == direction && (boardedAt == null || saved.boardedAt == boardedAt)) { "Report ID reused with different content." }
+                return@withLock id
+            }
+            validateScope(stageId, routeId, direction)
             val current = requireNotNull(cacheNow<Meta>(server, "meta")) { "Connect once to read the research policy." }
             require(settings.value.consentVersion == current.consentVersion) { "Research consent is required before reporting." }
-            val install = requireNotNull(dao.identity(server)).installId
-            val report = BoardingReport(uuid(), install, stageId, routeId, direction, eventTime(), current.consentVersion)
+            val time = boardedAt ?: eventTime()
+            val instant = Instant.parse(time)
+            require(instant <= now() && instant >= now().minusSeconds(7 * 24 * 60 * 60)) { "Review the boarding time again." }
+            val report = BoardingReport(id, install, stageId, routeId, direction, time, current.consentVersion)
             db.withTransaction {
                 dao.record(RecordEntity(server, report.id, "report", WireJson.encodeToString(report), createdAt = System.currentTimeMillis()))
                 queue(server, report.id, "report", "report:${report.id}", WireJson.encodeToString(report))

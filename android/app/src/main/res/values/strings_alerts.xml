@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alerts_notification_title">Your wait alert</string>
+    <string name="alerts_title">Wait alerts</string>
+    <string name="alerts_how_title">One alert, up to two hours</string>
+    <string name="alerts_how_detail">We check periodically and notify once when the current upper end of the wait range is at or below your threshold. Android may delay checks or notifications. No vehicle or seat is guaranteed.</string>
+    <string name="alerts_failed">Alert could not be saved</string>
+    <string name="alerts_permission_title">Notifications are not allowed</string>
+    <string name="alerts_permission_detail">Enable notifications in device settings to receive a wait alert. Browsing still works without them.</string>
+    <string name="alerts_open_settings">Open notification settings</string>
+    <string name="alerts_catalogue_needed">Load stages and routes first</string>
+    <string name="alerts_catalogue_detail">Connect once to choose a stage and a valid route.</string>
+    <string name="alerts_refresh">Refresh catalogue</string>
+    <string name="alerts_stage">Stage</string>
+    <string name="alerts_route">Route</string>
+    <string name="alerts_direction">Direction</string>
+    <string name="alerts_townbound">Towards town</string>
+    <string name="alerts_outbound">Away from town</string>
+    <string name="alerts_threshold">Wait threshold in minutes</string>
+    <string name="alerts_threshold_detail">Choose 1–60 minutes. The full estimated range must fit below the threshold.</string>
+    <string name="alerts_replace">Replace active alert</string>
+    <string name="alerts_enable">Enable one alert</string>
+    <string name="alerts_active">Alert is active</string>
+    <string name="alerts_fired">Alert sent</string>
+    <string name="alerts_expired">Alert expired</string>
+    <string name="alerts_cancelled">Alert cancelled</string>
+    <string name="alerts_summary">Route %1$s · %2$s · at most %3$d minutes</string>
+    <string name="alerts_expires">Automatically stops at %1$s (Nairobi)</string>
+    <string name="alerts_original_server">This alert uses its original server: %1$s</string>
+    <string name="alerts_cancel">Cancel alert</string>
+    <string name="alerts_choose">Choose</string>
+    <string name="alerts_channel">Wait alerts</string>
+    <string name="alerts_notification_text">%1$s at %2$s: next vehicle %3$s. Seats are not guaranteed.</string>
+    <string name="alerts_demo_suffix"> Demo data.</string>
+</resources>

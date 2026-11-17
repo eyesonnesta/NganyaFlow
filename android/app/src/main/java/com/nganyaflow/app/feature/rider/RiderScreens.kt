@@ -95,7 +95,7 @@ fun directionLabel(direction: String): String = stringResource(if (direction == 
 fun StageBoard(
     state: RiderState, board: StageEstimates?, refresh: () -> Unit, refreshCatalogue: () -> Unit,
     direction: (String) -> Unit, selectStage: (Stage) -> Unit, favourite: (String) -> Unit,
-    routeDetail: (Route) -> Unit, now: () -> Instant,
+    routeDetail: (Route) -> Unit, now: () -> Instant, boarding: () -> Unit = {},
 ) {
     var picker by rememberSaveable { mutableStateOf(false) }
     val stage = state.stages.find { it.id == state.settings.selectedStageId }
@@ -139,6 +139,7 @@ fun StageBoard(
                     RiderEstimateCard(route, estimate, now(), state.meta?.demoMode == true) { routeDetail(route) }
                 }
             }
+            if (boardRoutes.isNotEmpty()) item { PrimaryButton(stringResource(R.string.integration_board), boarding) }
             item { SecondaryButton(stringResource(R.string.rider_refresh), refresh) }
             item { Text(stringResource(R.string.rider_board_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
@@ -159,7 +160,7 @@ fun RiderEstimateCard(route: Route, estimate: Estimate?, now: Instant, demoMode:
         if (!available) Text(unavailableDetail(current?.reason), Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (current != null) FlowRow(Modifier.padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             InfoChip(stringResource(if (current.evidenceCount >= 3) R.string.evidence_recent else R.string.evidence_limited))
-            current.occupancyObservedAt?.let { Text(stringResource(R.string.rider_crowding_age, freshness(it, now)), style = MaterialTheme.typography.labelMedium) }
+            current.occupancyObservedAt?.let { Text(crowdingSummary(current.occupancy, it, now), style = MaterialTheme.typography.labelMedium) }
         }
     }
 }
@@ -245,7 +246,7 @@ fun RiderRoutes(state: RiderState, retry: () -> Unit, detail: (Route) -> Unit) {
 }
 
 @Composable
-fun RiderRouteDetail(state: RiderState, route: Route?, board: StageEstimates?, direction: (String) -> Unit, selectStage: (Stage) -> Unit, refresh: () -> Unit, evidence: () -> Unit) {
+fun RiderRouteDetail(state: RiderState, route: Route?, board: StageEstimates?, direction: (String) -> Unit, selectStage: (Stage) -> Unit, refresh: () -> Unit, evidence: () -> Unit, boarding: () -> Unit = {}) {
     if (route == null) { Column(Modifier.padding(16.dp)) { EmptyState(stringResource(R.string.no_routes), stringResource(R.string.search_again)) }; return }
     val selected = state.settings.selectedStageId
     val selectedHere = selected in route.stageIds
@@ -259,6 +260,7 @@ fun RiderRouteDetail(state: RiderState, route: Route?, board: StageEstimates?, d
         if (selectedHere && state.settings.direction in directions) {
             item { RiderEstimateCard(route, estimate, Instant.now().plusMillis(state.settings.clockOffsetMillis), state.meta?.demoMode == true) }
             item { SecondaryButton(stringResource(R.string.rider_evidence), evidence) }
+            item { PrimaryButton(stringResource(R.string.integration_board), boarding) }
             item { SecondaryButton(stringResource(R.string.rider_refresh), refresh) }
         } else item { NoticeCard(stringResource(R.string.choose_stage), stringResource(R.string.rider_choose_on_route)) }
         item { Text(stringResource(R.string.rider_route_stages), style = MaterialTheme.typography.titleLarge) }
@@ -271,7 +273,8 @@ fun RiderRouteDetail(state: RiderState, route: Route?, board: StageEstimates?, d
                 }
                 TextButton({ selectStage(stage) }, Modifier.weight(1f).heightIn(min = 64.dp)) {
                     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(stage.name, style = MaterialTheme.typography.titleMedium)
+                        Text(stage.name, style = if(stage.id == selected) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+                            fontWeight = if(stage.id == selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal)
                         if (stage.id == selected) Text(stringResource(R.string.rider_you_are_here), style = MaterialTheme.typography.labelMedium)
                     }
                 }
@@ -291,10 +294,10 @@ fun RiderEvidence(state: RiderState, estimate: Estimate?, stageId: String, route
         if (state.meta?.demoMode == true || estimate?.dataKind?.let { it != "field" } == true) item { DemoDataChip() }
         item { Text(stringResource(R.string.rider_evidence_count, estimate?.evidenceCount ?: 0), style = MaterialTheme.typography.titleLarge) }
         item { Text(stringResource(R.string.rider_evidence_window, state.meta?.evidenceWindowMinutes ?: 30)) }
-        item { Text(stringResource(R.string.rider_last_seen, estimate?.lastObservedAt?.let(::nairobiTime) ?: unknown)) }
+        item { Text(stringResource(R.string.rider_last_seen, relativeNairobiTime(estimate?.lastObservedAt, at, LocalConfiguration.current.locales[0].language))) }
         item { Text(stringResource(R.string.rider_model, estimate?.modelVersion ?: state.meta?.modelVersion ?: unknown)) }
         item { Text(stringResource(R.string.rider_data_kind, estimate?.dataKind ?: state.meta?.modelDataKind ?: unknown)) }
-        if (estimate != null) item { Text(stringResource(R.string.rider_crowding_age, freshness(estimate.occupancyObservedAt, at))) }
+        if (estimate != null) item { Text(crowdingSummary(estimate.occupancy, estimate.occupancyObservedAt, at)) }
         if (estimate?.status != "available") item { NoticeCard(unavailableTitle(estimate?.reason), unavailableDetail(estimate?.reason), kind = NoticeKind.Warning) }
     }
 }
@@ -336,6 +339,12 @@ fun unavailableDetail(reason: String?): String = stringResource(when (reason) {
 fun freshness(value: String?, now: Instant): String {
     val elapsed = value?.let { runCatching { Duration.between(Instant.parse(it), now).seconds.coerceAtLeast(0) }.getOrNull() }
     return when { elapsed == null -> stringResource(R.string.rider_not_known); elapsed < 60 -> stringResource(R.string.rider_fresh_seconds); else -> stringResource(R.string.rider_fresh_minutes, elapsed / 60) }
+}
+
+@Composable
+fun crowdingSummary(occupancy: String, at: String?, now: Instant): String {
+    val label = stringResource(when(occupancy) { "empty" -> R.string.empty; "seats_available" -> R.string.seats_available; "standing" -> R.string.standing; "full" -> R.string.full; else -> R.string.unknown })
+    return "${stringResource(R.string.integration_crowding)}: $label · ${relativeNairobiTime(at, now, LocalConfiguration.current.locales[0].language)}"
 }
 
 fun nairobiTime(value: String): String = runCatching { DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm:ss", Locale.getDefault()).withZone(ZoneId.of("Africa/Nairobi")).format(Instant.parse(value)) }.getOrDefault(value)

@@ -27,6 +27,13 @@ import com.nganyaflow.app.core.designsystem.EmptyState
 import com.nganyaflow.app.core.designsystem.LoadingState
 import com.nganyaflow.app.core.designsystem.PrimaryButton
 import com.nganyaflow.app.feature.rider.*
+import com.nganyaflow.app.feature.reporting.BoardingScreen
+import com.nganyaflow.app.feature.reporting.ActivityScreen
+import com.nganyaflow.app.feature.settings.SettingsScreen
+import com.nganyaflow.app.feature.enumerator.AccessScreen
+import com.nganyaflow.app.feature.enumerator.EnumeratorScreen
+import com.nganyaflow.app.feature.crew.CrewScreen
+import com.nganyaflow.app.feature.alerts.AlertsScreen
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 
@@ -36,10 +43,15 @@ import kotlinx.serialization.Serializable
 @Serializable data object SettingsDestination
 @Serializable data class RouteDetailDestination(val routeId: String)
 @Serializable data class EvidenceDestination(val routeId: String, val stageId: String, val direction: String)
+@Serializable data class BoardingDestination(val stageId: String, val direction: String)
+@Serializable data object AccessDestination
+@Serializable data object EnumeratorDestination
+@Serializable data object CrewDestination
+@Serializable data object AlertsDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppShell() {
+fun AppShell(alertNavigation: Int = 0) {
     val repository = (LocalContext.current.applicationContext as NganyaFlowApp).container.repository
     val model: RiderViewModel = viewModel(factory = remember(repository) {
         object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -51,12 +63,34 @@ fun AppShell() {
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val destination = backStack?.destination
+    var settingsTitle by remember { mutableStateOf("") }
+    var activityTitle by remember { mutableStateOf("") }
+    var boardingTitle by remember { mutableStateOf("") }
+    var accessTitle by remember { mutableStateOf("") }
+    var enumeratorTitle by remember { mutableStateOf("") }
+    val pageTitle = when {
+        destination?.hasRoute<RouteDetailDestination>() == true -> {
+            val id = backStack?.toRoute<RouteDetailDestination>()?.routeId
+            state.routes.find { it.id == id }?.let { "${it.shortName ?: it.id} · ${it.name}" } ?: stringResource(R.string.routes)
+        }
+        destination?.hasRoute<EvidenceDestination>() == true -> stringResource(R.string.integration_about)
+        destination?.hasRoute<RoutesDestination>() == true -> stringResource(R.string.routes)
+        destination?.hasRoute<ActivityDestination>() == true -> activityTitle.ifBlank { stringResource(R.string.activity) }
+        destination?.hasRoute<SettingsDestination>() == true -> settingsTitle.ifBlank { stringResource(R.string.settings) }
+        destination?.hasRoute<BoardingDestination>() == true -> boardingTitle.ifBlank { stringResource(R.string.integration_board) }
+        destination?.hasRoute<AccessDestination>() == true -> accessTitle.ifBlank { stringResource(R.string.integration_access) }
+        destination?.hasRoute<EnumeratorDestination>() == true -> enumeratorTitle.ifBlank { stringResource(R.string.integration_enumerator) }
+        destination?.hasRoute<CrewDestination>() == true -> stringResource(R.string.crew_title)
+        destination?.hasRoute<AlertsDestination>() == true -> stringResource(R.string.integration_alerts)
+        else -> stringResource(R.string.app_name)
+    }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val stageId = state.settings.selectedStageId
     val direction = state.settings.direction
     val board by remember(stageId, direction, repository) { repository.estimates(stageId, direction) }
         .collectAsStateWithLifecycle(initialValue = null)
     val detail = destination?.hasRoute<RouteDetailDestination>() == true || destination?.hasRoute<EvidenceDestination>() == true
+    val nested = detail || destination?.hasRoute<BoardingDestination>() == true || destination?.hasRoute<AccessDestination>() == true || destination?.hasRoute<EnumeratorDestination>() == true || destination?.hasRoute<CrewDestination>() == true || destination?.hasRoute<AlertsDestination>() == true
     val visible = destination?.hasRoute<StageDestination>() == true || detail
     LaunchedEffect(stageId, direction, visible, state.initialized) {
         if (visible && state.initialized) lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -71,6 +105,7 @@ fun AppShell() {
         RiderOnboarding(state, model::onboard)
         return
     }
+    LaunchedEffect(alertNavigation) { if(alertNavigation > 0) nav.popBackStack<StageDestination>(inclusive = false) }
     val selected = when {
         destination?.hasRoute<RoutesDestination>() == true -> 1
         destination?.hasRoute<ActivityDestination>() == true -> 2
@@ -91,8 +126,8 @@ fun AppShell() {
     }
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = { if (detail) IconButton({ nav.navigateUp() }) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.rider_back)) } })
+            TopAppBar(title = { Text(pageTitle, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+                navigationIcon = { if (nested) IconButton({ nav.navigateUp() }) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.rider_back)) } })
         },
         bottomBar = {
             NavigationBar {
@@ -107,16 +142,17 @@ fun AppShell() {
         NavHost(nav, startDestination = StageDestination, modifier = Modifier.padding(padding)) {
             composable<StageDestination> {
                 StageBoard(state, board, model::refreshNow, model::refreshCatalogue, model::direction,
-                    { model.selectStage(it) }, model::favourite, { nav.navigate(RouteDetailDestination(it.id)) }, repository::now)
+                    { model.selectStage(it) }, model::favourite, { nav.navigate(RouteDetailDestination(it.id)) }, repository::now,
+                    boarding = { nav.navigate(BoardingDestination(stageId, direction)) })
             }
             composable<RoutesDestination> {
                 RiderRoutes(state, model::refreshCatalogue) { nav.navigate(RouteDetailDestination(it.id)) }
             }
             composable<RouteDetailDestination> { entry ->
                 val route = state.routes.find { it.id == entry.toRoute<RouteDetailDestination>().routeId }
-                RiderRouteDetail(state, route, board, model::direction, { stage -> model.selectStage(stage, route) }, model::refreshNow) {
+                RiderRouteDetail(state, route, board, model::direction, { stage -> model.selectStage(stage, route) }, model::refreshNow, evidence = {
                     if (route != null) nav.navigate(EvidenceDestination(route.id, stageId, direction))
-                }
+                }, boarding = { nav.navigate(BoardingDestination(stageId, direction)) })
             }
             composable<EvidenceDestination> { entry ->
                 val args = entry.toRoute<EvidenceDestination>()
@@ -124,14 +160,17 @@ fun AppShell() {
                 RiderEvidence(state, evidence?.routes?.find { it.routeId == args.routeId }?.estimate, args.stageId, args.routeId, repository::now)
             }
             composable<ActivityDestination> {
-                val reports by repository.reports.collectAsStateWithLifecycle()
-                Column(Modifier.padding(16.dp)) {
-                    if (reports.isEmpty()) EmptyState(stringResource(R.string.no_reports), stringResource(R.string.no_reports_detail)) {
-                        PrimaryButton(stringResource(R.string.browse_routes), { navigate(1) })
-                    } else reports.forEach { Text("${it.report.boardedAt} · ${it.state}", Modifier.padding(vertical = 12.dp)) }
-                }
+                ActivityScreen(repository, onBrowse = { navigate(1) }, onTitleChange = { activityTitle = it })
             }
-            composable<SettingsDestination> { RiderBasicSettings(state, model::theme, model::refreshCatalogue) }
+            composable<SettingsDestination> { SettingsScreen(repository, onAccess = { nav.navigate(AccessDestination) }, onAlerts = { nav.navigate(AlertsDestination) }, onTitleChange = { settingsTitle = it }) }
+            composable<BoardingDestination> { entry ->
+                val args = entry.toRoute<BoardingDestination>()
+                BoardingScreen(repository, args.stageId, args.direction, onSaved = { navigate(2) }, onCancel = { nav.navigateUp() }, onTitleChange = { boardingTitle = it })
+            }
+            composable<AccessDestination> { AccessScreen(repository, onEnumerator = { nav.navigate(EnumeratorDestination) }, onCrew = { nav.navigate(CrewDestination) }, onTitleChange = { accessTitle = it }) }
+            composable<EnumeratorDestination> { EnumeratorScreen(repository, onBack = { nav.navigateUp() }, onTitleChange = { enumeratorTitle = it }) }
+            composable<CrewDestination> { CrewScreen(repository, onAccess = { nav.navigate(AccessDestination) }) }
+            composable<AlertsDestination> { AlertsScreen(repository) }
         }
     }
 }
