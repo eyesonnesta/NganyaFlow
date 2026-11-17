@@ -1,6 +1,7 @@
 import argparse
 import csv
 import json
+import os
 from pathlib import Path
 
 from .config import Settings
@@ -47,10 +48,12 @@ def seed_demo(args):
             lines.append(f"{role}: {code}")
         except Conflict:
             lines.append(f"{role}: {code} (already registered)")
-    # Codes are credentials: keep them out of logs. They go to an owner-only file.
+    # Keep codes out of logs; POSIX modes restrict the file to its owner.
+    # On Windows, protection relies on the runtime folder's permissions.
     note = runtime / "demo-access-codes.txt"
     note.touch(mode=0o600, exist_ok=True)
-    note.chmod(0o600)
+    if os.name == "posix":
+        note.chmod(0o600)
     note.write_text("\n".join(lines) + f"\nvalid until {expires.isoformat()}\n", "utf-8")
     print(f"Access codes for enumerator and crew saved to {note} (not shown here).")
     if args.show_codes:

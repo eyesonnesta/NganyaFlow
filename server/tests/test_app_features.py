@@ -263,6 +263,7 @@ def test_compose_file_has_no_default_write_token():
 
 
 def test_seed_demo_keeps_codes_out_of_output(tmp_path, monkeypatch, capsys):
+    import os
     import stat
     from types import SimpleNamespace
 
@@ -285,7 +286,8 @@ def test_seed_demo_keeps_codes_out_of_output(tmp_path, monkeypatch, capsys):
     text = saved.read_text("utf-8")
     assert "NF-TEST-ENUM" in text and "crew: NF-" in text
     assert "NF-" not in output and "demo-access-codes.txt" in output
-    assert stat.S_IMODE(saved.stat().st_mode) == 0o600
+    if os.name == "posix":
+        assert stat.S_IMODE(saved.stat().st_mode) == 0o600
 
 
 def test_daily_report_limit_per_install(api):

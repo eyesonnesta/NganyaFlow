@@ -202,9 +202,10 @@ shown once; only a hash is stored. The app exchanges it for a 12-hour token at
 `nganyaflow seed-demo` loads 12 days of synthetic history for every route in the
 catalogue (about 24,000 simulated arrivals, `data_kind=synthetic`), trains and activates
 a Quantile Regression Forest (about 30 seconds) and creates one enumerator and one crew
-code. The codes are saved to `runtime/demo-access-codes.txt` (owner-readable only) and are
-not printed, so they stay out of container and CI logs. Add `--show-codes` only in a
-private terminal. With
+code. The codes are saved to `runtime/demo-access-codes.txt` and are not printed, so they
+stay out of container and CI logs. The owner-only file mode applies on Linux, macOS and
+Docker; on Windows, the file relies on the permissions of the runtime folder.
+Add `--show-codes` only in a private terminal. With
 `NGANYAFLOW_DEMO_MODE=1` the API also keeps one open synthetic session per stage and
 route supplied with fresh arrivals, so estimates are live while the demo runs. The demo
 is a software check: its accuracy figures describe the simulator, not Nairobi.
