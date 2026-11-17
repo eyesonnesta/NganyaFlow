@@ -119,9 +119,9 @@ fun AppShell(alertNavigation: Int = 0) {
         }
         val route = when (index) { 1 -> RoutesDestination; 2 -> ActivityDestination; 3 -> SettingsDestination; else -> StageDestination }
         nav.navigate(route) {
-            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            popUpTo(nav.graph.findStartDestination().id) { saveState = false }
             launchSingleTop = true
-            restoreState = true
+            restoreState = false
         }
     }
     Scaffold(

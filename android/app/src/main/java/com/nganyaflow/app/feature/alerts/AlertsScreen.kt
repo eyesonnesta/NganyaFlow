@@ -85,7 +85,7 @@ fun AlertsScreen(repository: NganyaRepository) {
         error?.let { item { NoticeCard(stringResource(R.string.alerts_failed), it, kind = NoticeKind.Error) } }
         if(denied) item {
             NoticeCard(stringResource(R.string.alerts_permission_title), stringResource(R.string.alerts_permission_detail), kind = NoticeKind.Warning)
-            TextButton({ context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }) {
+            TextButton({ context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }) {
                 Text(stringResource(R.string.alerts_open_settings))
             }
         }

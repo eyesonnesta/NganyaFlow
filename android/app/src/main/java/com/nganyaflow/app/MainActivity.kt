@@ -4,11 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.compose.LocalActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import android.content.res.Configuration
@@ -44,11 +47,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settings by (application as NganyaFlowApp).container.repository.settings.collectAsStateWithLifecycle()
             val dark = when (settings.theme) { "dark" -> true; "light" -> false; else -> isSystemInDarkTheme() }
+            SideEffect {
+                androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
+                }
+            }
             val configuration = LocalConfiguration.current
             val localized = remember(settings.language, configuration) {
                 createConfigurationContext(Configuration(configuration).apply { setLocale(Locale.forLanguageTag(settings.language)) })
             }
-            CompositionLocalProvider(LocalContext provides localized, LocalConfiguration provides localized.resources.configuration) {
+            CompositionLocalProvider(LocalContext provides localized, LocalConfiguration provides localized.resources.configuration,
+                LocalActivityResultRegistryOwner provides this@MainActivity, LocalActivity provides this@MainActivity) {
             NganyaFlowTheme(darkTheme = dark, dynamicColor = settings.dynamicColor) { AppShell(alertNavigation.intValue) }
             }
         }

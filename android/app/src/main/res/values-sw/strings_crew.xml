@@ -1,4 +1,5 @@
 <resources>
+<string name="crew_controls">%1$s · Dakika %2$d · Badili vichujio</string>
 <string name="crew_title">Shughuli za njia</string>
 <string name="crew_participation">Abiria wanaoshiriki pekee</string>
 <string name="crew_disclaimer">Hesabu hizi ni za abiria wanaoripoti katika programu hii. Si idadi ya abiria wote wala mahitaji yote.</string>

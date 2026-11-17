@@ -136,7 +136,7 @@ fun SettingsScreen(repository: NganyaRepository, onAccess: () -> Unit, onAlerts:
                 if(settings.consentVersion != null) item { Button(enabled = !busy, onClick = { perform(saved) { repository.setConsent(false) } }) { Text(stringResource(R.string.settings_withdraw)) } }
                 item { Text(stringResource(if(locationGranted) R.string.settings_location_on else R.string.settings_location_off)) }
                 item { SecondaryButton(stringResource(R.string.settings_device_permissions), {
-                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
+                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }) }
                 item { Text(stringResource(R.string.settings_collected), style = MaterialTheme.typography.bodyMedium) }
                 item { OutlinedButton(enabled = !busy, onClick = { confirmDelete = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_delete)) } }

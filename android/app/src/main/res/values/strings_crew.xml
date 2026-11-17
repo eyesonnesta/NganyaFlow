@@ -1,4 +1,5 @@
 <resources>
+<string name="crew_controls">%1$s · %2$d min · Change filters</string>
 <string name="crew_title">Route activity</string>
 <string name="crew_participation">Participating riders only</string>
 <string name="crew_disclaimer">These counts describe riders who report in this app. They are not total passengers or total demand.</string>

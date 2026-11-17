@@ -29,19 +29,22 @@ import java.time.format.DateTimeFormatter
 fun CrewScreen(repository: NganyaRepository, onAccess: () -> Unit) {
     val auth by repository.auth.collectAsStateWithLifecycle()
     val routes by repository.routes.collectAsStateWithLifecycle()
+    val settings by repository.settings.collectAsStateWithLifecycle()
     val meta by repository.meta.collectAsStateWithLifecycle()
     var routeId by rememberSaveable { mutableStateOf("") }
     var direction by rememberSaveable { mutableStateOf("townbound") }
     var window by rememberSaveable { mutableIntStateOf(60) }
     var expanded by remember { mutableStateOf(false) }
+    var filters by rememberSaveable { mutableStateOf(false) }
     var refresh by remember { mutableIntStateOf(0) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var estimates by remember(routeId, direction) { mutableStateOf<Map<String, Estimate>>(emptyMap()) }
     var selectedStage by rememberSaveable { mutableStateOf<String?>(null) }
-    val route = routes.find { it.id == routeId } ?: routes.firstOrNull()
+    val route = routes.find { it.id == routeId } ?: routes.firstOrNull { settings.selectedStageId in it.stageIds } ?: routes.firstOrNull()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val now by produceState(repository.now()) { while (true) { value = repository.now(); delay(1000) } }
+    val language = LocalConfiguration.current.locales[0].language
     val demand by remember(route?.id, direction, window) { repository.demandFlow(route?.id.orEmpty(), direction, window) }
         .collectAsStateWithLifecycle(initialValue = null)
     LaunchedEffect(route?.id, direction, window, auth?.role, refresh) {
@@ -65,7 +68,6 @@ fun CrewScreen(repository: NganyaRepository, onAccess: () -> Unit) {
         }
     }
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.crew_title), style = MaterialTheme.typography.headlineSmall)
         NoticeCard(stringResource(R.string.crew_participation), stringResource(R.string.crew_disclaimer), kind = NoticeKind.Warning)
         if (auth?.role != "crew") {
             Text(stringResource(R.string.crew_access_required))
@@ -79,7 +81,10 @@ fun CrewScreen(repository: NganyaRepository, onAccess: () -> Unit) {
                     }) }
                 }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            TextButton({ filters = !filters }, Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.crew_controls, stringResource(if(direction == "townbound") R.string.crew_townbound else R.string.crew_outbound), window))
+            }
+            if(filters) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 (route?.directions ?: emptyList()).forEach { value -> FilterChip(direction == value, { direction = value; selectedStage = null }, label = { Text(stringResource(if(value == "townbound") R.string.crew_townbound else R.string.crew_outbound)) }) }
                 listOf(30, 60, 120).forEach { minutes -> FilterChip(window == minutes, { window = minutes }, label = { Text(stringResource(R.string.crew_window, minutes)) }) }
             }
@@ -91,7 +96,7 @@ fun CrewScreen(repository: NganyaRepository, onAccess: () -> Unit) {
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (demand == null && !loading && error == null) Text(stringResource(R.string.crew_no_data))
             demand?.let { result ->
-                Text(stringResource(R.string.crew_as_of, crewTime(result.asOf)), style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.crew_as_of, relativeNairobiTime(result.asOf, now, language)), style = MaterialTheme.typography.labelMedium)
                 val maximum = maxOf(1, result.stages.maxOfOrNull { it.boardingReports } ?: 1)
                 LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
                     items(result.stages, key = { it.stageId }) { stage ->
@@ -110,8 +115,8 @@ fun CrewScreen(repository: NganyaRepository, onAccess: () -> Unit) {
                                     formatWaitRange(wait.lowerMinutes, wait.upperMinutes, compact = true, language = LocalConfiguration.current.locales[0].language)
                                     else stringResource(R.string.crew_wait_unavailable), style = MaterialTheme.typography.bodySmall)
                                 if(selectedStage == stage.stageId) {
-                                    Text(stringResource(R.string.crew_crowding_time, stage.occupancyObservedAt?.let(::crewTime) ?: stringResource(R.string.crew_unknown_time)))
-                                    Text(stringResource(R.string.crew_last_arrival, stage.latestArrivalAt?.let(::crewTime) ?: stringResource(R.string.crew_unknown_time)))
+                                    Text(stringResource(R.string.crew_crowding_time, relativeNairobiTime(stage.occupancyObservedAt, now, language)))
+                                    Text(stringResource(R.string.crew_last_arrival, relativeNairobiTime(stage.latestArrivalAt, now, language)))
                                     Text(stringResource(R.string.crew_limits, result.minReportsForOk))
                                 }
                             }

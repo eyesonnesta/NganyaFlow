@@ -20,6 +20,7 @@ import com.nganyaflow.app.core.datastore.AppPreferences
 import com.nganyaflow.app.core.designsystem.formatWaitRange
 import com.nganyaflow.app.core.network.WireJson
 import com.nganyaflow.app.core.network.createApi
+import com.nganyaflow.app.core.sync.serverConstraints
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
@@ -59,14 +60,14 @@ class WaitAlertStore(context: Context) {
 object WaitAlertScheduler {
     const val WORK = "nganyaflow-wait-alert"
     fun start(context: Context, id: String) {
-        WorkManager.getInstance(context).enqueueUniqueWork(WORK, ExistingWorkPolicy.REPLACE, request(id, false))
+        WorkManager.getInstance(context).enqueueUniqueWork(WORK, ExistingWorkPolicy.REPLACE, request(context, id, false))
     }
     fun again(context: Context, id: String) {
-        WorkManager.getInstance(context).enqueueUniqueWork(WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request(id, true))
+        WorkManager.getInstance(context).enqueueUniqueWork(WORK, ExistingWorkPolicy.APPEND_OR_REPLACE, request(context, id, true))
     }
-    private fun request(id: String, delayed: Boolean): OneTimeWorkRequest = OneTimeWorkRequestBuilder<WaitAlertWorker>()
+    private fun request(context: Context, id: String, delayed: Boolean): OneTimeWorkRequest = OneTimeWorkRequestBuilder<WaitAlertWorker>()
         .setInputData(workDataOf("alertId" to id))
-        .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        .setConstraints(serverConstraints(WaitAlertStore(context).read()?.server.orEmpty()))
         .setInitialDelay(if(delayed) 60 else 0, TimeUnit.SECONDS).build()
     fun cancel(context: Context) {
         val store = WaitAlertStore(context)

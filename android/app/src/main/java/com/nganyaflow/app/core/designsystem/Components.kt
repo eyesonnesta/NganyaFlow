@@ -55,7 +55,7 @@ fun RouteBadge(number: String, modifier: Modifier = Modifier) {
         modifier = modifier, color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary, shape = RoundedCornerShape(14.dp),
     ) {
-        Text(number, Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+        Text(if(number == "cbd-study-simulated") "SIM" else number, Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     }
 }

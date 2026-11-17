@@ -22,7 +22,10 @@ def show():
             print(text, n.get('bounds'))
 
 def tap(label):
-    candidates = [n for n in nodes() if label.casefold() in ((n.get('text') or '') + ' ' + (n.get('content-desc') or '')).casefold()]
+    current = nodes()
+    candidates = [n for n in current if label.casefold() in ((n.get('text') or '').casefold(), (n.get('content-desc') or '').casefold())]
+    if not candidates:
+        candidates = [n for n in current if label.casefold() in ((n.get('text') or '') + ' ' + (n.get('content-desc') or '')).casefold()]
     if not candidates:
         raise RuntimeError('Control not found: ' + label)
     n = candidates[0]

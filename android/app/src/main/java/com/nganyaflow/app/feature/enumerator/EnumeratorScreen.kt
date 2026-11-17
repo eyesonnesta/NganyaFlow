@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -70,6 +71,8 @@ fun EnumeratorScreen(repository: NganyaRepository, onBack: () -> Unit, onTitleCh
         onDispose { view.keepScreenOn = previous }
     }
     val haptics = LocalHapticFeedback.current
+    val listState = rememberLazyListState()
+    LaunchedEffect(selectedId, history, closing) { listState.scrollToItem(0) }
     val title = stringResource(when { history -> R.string.enum_history; selected == null -> R.string.enum_setup; selected.endedAt != null -> if (selected.paused) R.string.enum_paused else R.string.enum_closed; closing != null -> R.string.enum_summary; else -> R.string.enum_live })
     LaunchedEffect(title) { onTitleChange(title) }
 
@@ -89,7 +92,7 @@ fun EnumeratorScreen(repository: NganyaRepository, onBack: () -> Unit, onTitleCh
             }
         }
     }) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(padding), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onBack) { Text(stringResource(R.string.enum_back)) }
