@@ -75,7 +75,13 @@ class NganyaRepository(
         mutableSettings.value = preferences.flow.first()
         val server = settings.value.serverUrl
         val identity = dao.identity(server) ?: IdentityEntity(server, settings.value.installId.ifBlank(::uuid)).also { dao.identity(it) }
-        preferences.update { it.copy(installId = identity.installId) }
+        preferences.update {
+            // Recover a deletion interrupted between the Room commit and preference update.
+            val sameIdentity = it.installId == identity.installId
+            it.copy(installId = identity.installId,
+                consentVersion = it.consentVersion.takeIf { sameIdentity },
+                consentAt = it.consentAt.takeIf { sameIdentity })
+        }
         mutableSettings.value = preferences.flow.first()
         mutableAuth.value = vault.read(server)
         scope.launch { preferences.flow.collect { mutableSettings.value = it } }
