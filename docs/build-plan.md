@@ -94,7 +94,7 @@ docs/build-plan.md       this file
 server/src/nganyaflow/   main.py (API), storage.py (SQLite), schemas.py, ml.py (QRF),
                          demo.py (synthetic data + live simulator), access.py, admin*.py, cli.py
 server/data/reference/catalog.json   66 stages, 13 routes
-server/tests/            34 tests
+server/tests/            38 tests
 android/                 does not exist yet. You create it
 ```
 
@@ -113,8 +113,9 @@ android/                 does not exist yet. You create it
 | Crowding in estimates, per-stage estimates endpoint, meta endpoint | `docs/api.md` |
 | Catalogue of 66 stages with coordinates and 13 routes | `server/data/reference/catalog.json` |
 | Synthetic history for every route, `seed-demo` command, live simulator | `server/src/nganyaflow/demo.py` |
-| 34 backend tests passing, lint clean on `server/src`, `server/tests`, `server/scripts` | `pytest server/tests -q` |
+| 38 backend tests passing, lint clean on `server/src`, `server/tests`, `server/scripts` | `pytest server/tests -q` |
 | Live check: 137 of 143 stage/route/direction groups returned an estimate | Manual run, 16 Nov |
+| Review fixes: no default write token, undo and deletion cannot be reversed by a retried upload, access codes kept out of logs | Tests added, 17 Nov |
 
 ### Needs improvement
 
@@ -172,6 +173,13 @@ Behaviour the app must respect:
    `data_kind` is not `field`, the UI shows a "Demo data" label.
 9. **Consent version.** Reports must carry the `consent_version` from `/meta` (currently
    `2026-11-v1`) or they are rejected with `422`.
+10. **Undo and deletion are permanent on the server.** An undone report id is refused if
+    it is uploaded again (`retracted`). Deleting data retires the `install_id` for good:
+    the app drops its queue, creates a new `install_id`, then sends the deletion request
+    for the old one.
+11. **No shared secret in the app.** The app authenticates only with access codes. The
+    server's optional `X-Write-Token` is for scripts, has no default and acts as every
+    role.
 
 Running the server locally:
 
@@ -180,9 +188,10 @@ Running the server locally:
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e "server[dev]"
 cd server
+# fixed codes are for a private local server only; omit them to get random ones
 nganyaflow seed-demo --enumerator-code NF-DEMO-ENUM --crew-code NF-DEMO-CREW   # ~30 s
-NGANYAFLOW_DEMO_MODE=1 NGANYAFLOW_WRITE_TOKEN=local-secret \
-  uvicorn nganyaflow.main:app --host 0.0.0.0 --port 8000
+NGANYAFLOW_DEMO_MODE=1 uvicorn nganyaflow.main:app --host 0.0.0.0 --port 8000
+cat runtime/demo-access-codes.txt        # codes are saved here, never printed
 # checks
 curl localhost:8000/health
 curl localhost:8000/api/v1/stages/muthaiga/estimates
@@ -377,7 +386,9 @@ Data rules:
   until sign-in; network failure means retry later with the same id.
 - Sync states shown to people: Queued, Uploading, Synced, Will retry, Needs attention,
   Deletion pending, Deleted.
-- A deletion request clears the local report queue first, then is itself queued.
+- A deletion request clears the local report queue first, replaces the install id with a
+  new random one, then queues the request for the old id.
+- Undo of a report that is mid-upload waits for the upload result, then sends the delete.
 - Server address: default from a build field (`http://10.0.2.2:8000` in debug). Because
   the demo URL is short-lived, Settings has a "Server address" field that validates
   against `/health` before saving. Debug builds allow cleartext to `10.0.2.2` and
@@ -461,7 +472,7 @@ check is met or explicitly reported as not met.
 3. Create branch `android` from the result. Add `AGENTS.md` if absent.
 4. Run the backend locally as in A5 and confirm estimates are returned.
 
-Accept: `pytest server/tests -q` shows 34 passed; `curl` of a stage's estimates returns at
+Accept: `pytest server/tests -q` shows 38 passed; `curl` of a stage's estimates returns at
 least one `available`; `design/tokens.json` exists on the branch.
 
 ### WP1. Backend improvements
@@ -543,7 +554,7 @@ Consent gate, route choice, review, local save, outbox upload, Activity list and
 undo for unsynced and synced reports, sync details.
 
 Accept: a report made offline shows Queued, then Synced after reconnecting, and appears in
-the crew demand count on the server; killing the app between save and upload loses
+the crew demand count on the server; an undone report stays gone when its upload is retried; killing the app between save and upload loses
 nothing and creates no duplicate; undo removes it on the server; declining consent returns
 to browsing with nothing stored; UI test for the full flow.
 
@@ -551,7 +562,7 @@ to browsing with nothing stored; UI test for the full flow.
 
 Language (English and Kiswahili for every string; mark Kiswahili "needs review" in About
 until a speaker has checked it), appearance, data and privacy with consent withdrawal and
-"Delete my data", sync and storage, server address with health check, about.
+"Delete my data" (which also replaces the install id), sync and storage, server address with health check, about.
 
 Accept: switching language changes the whole app without restart problems; deleting data
 empties Activity, shows pending then completed, and a report queued before the request is
@@ -561,7 +572,7 @@ not uploaded afterwards; changing the server address to an unreachable one is re
 
 Access code entry, Setup, Live observation, Pause and Resume, Summary, History, as in B2.
 
-Accept: with code `NF-DEMO-ENUM`, a session recorded on the emulator appears on the server
+Accept: with the enumerator code from a local server (`NF-DEMO-ENUM` if seeded as in A5), a session recorded on the emulator appears on the server
 (check `/admin`), and after three arrivals the stage shows an estimate; recording offline
 then reconnecting uploads session, events and end in the right order; process death during
 a session restores it; an expired or revoked code keeps unsent events and asks for a new
@@ -572,7 +583,7 @@ voiding an event removes it from the estimate.
 
 Role landing, demand screen and stage detail as in B2.
 
-Accept: with code `NF-DEMO-CREW`, counts match `GET /api/v1/demand` for the same window;
+Accept: with the crew code from a local server (`NF-DEMO-CREW` if seeded as in A5), counts match `GET /api/v1/demand` for the same window;
 an enumerator code is refused with a clear message; the disclaimer is visible without
 scrolling on a 360 dp wide screen; `limited` and `no_data` are visually distinct without
 relying on colour.

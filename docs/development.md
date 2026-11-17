@@ -202,23 +202,32 @@ shown once; only a hash is stored. The app exchanges it for a 12-hour token at
 `nganyaflow seed-demo` loads 12 days of synthetic history for every route in the
 catalogue (about 24,000 simulated arrivals, `data_kind=synthetic`), trains and activates
 a Quantile Regression Forest (about 30 seconds) and creates one enumerator and one crew
-code (printed, and saved to `runtime/demo-access-codes.txt`). With
+code. The codes are saved to `runtime/demo-access-codes.txt` (owner-readable only) and are
+not printed, so they stay out of container and CI logs. Add `--show-codes` only in a
+private terminal. With
 `NGANYAFLOW_DEMO_MODE=1` the API also keeps one open synthetic session per stage and
 route supplied with fresh arrivals, so estimates are live while the demo runs. The demo
 is a software check: its accuracy figures describe the simulator, not Nairobi.
 
 ```bash
 # Docker (builds, seeds on first start, serves on localhost:8000)
-NGANYAFLOW_WRITE_TOKEN=pick-a-secret docker compose up --build
-docker compose logs nganyaflow | grep -i "admin\|code"
+docker compose up --build -d
+docker compose exec nganyaflow cat /app/runtime/demo-access-codes.txt
+docker compose exec nganyaflow cat /app/runtime/admin-password.txt
 
 # Without Docker
 pip install -e "server[dev]"
 cd server && nganyaflow seed-demo && NGANYAFLOW_DEMO_MODE=1 \
-  NGANYAFLOW_WRITE_TOKEN=pick-a-secret uvicorn nganyaflow.main:app --port 8000
+  uvicorn nganyaflow.main:app --port 8000
+cat runtime/demo-access-codes.txt
 ```
 
-Set `NGANYAFLOW_DEMO_ENUMERATOR_CODE` and `NGANYAFLOW_DEMO_CREW_CODE` for fixed codes.
+The shared write token is optional and has no default. It acts as every role, so leave
+`NGANYAFLOW_WRITE_TOKEN` unset unless a script needs it, and then use a long random value.
+`NGANYAFLOW_DEMO_ENUMERATOR_CODE` and `NGANYAFLOW_DEMO_CREW_CODE` fix the codes; use fixed
+codes only on a private local server, never behind a public URL. You can also create and
+revoke codes at `/admin/access`. Note that the admin password is still printed once in the
+start-up log (existing behaviour); keep those logs private or rotate it before sharing.
 The Android emulator reaches the host at `http://10.0.2.2:8000`. A physical phone, and
 Android's default cleartext rule, need HTTPS: expose the server with a temporary tunnel
 and share that address only for the duration of the demo.

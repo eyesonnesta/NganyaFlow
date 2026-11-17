@@ -179,10 +179,16 @@ def test_reports_are_idempotent_validated_and_retractable(api):
         api.delete(f"/api/v1/reports/{first['id']}", params={"install_id": install}).status_code
         == 204
     )
-    assert (
-        api.delete(f"/api/v1/reports/{first['id']}", params={"install_id": install}).status_code
-        == 404
-    )
+    # Undo is repeatable, and a delayed retry of the original upload cannot restore it.
+    again = api.delete(f"/api/v1/reports/{first['id']}", params={"install_id": install})
+    assert again.status_code == 204
+    replay = api.post("/api/v1/reports", json=body).json()
+    assert replay["accepted_ids"] == [] and replay["duplicate_ids"] == []
+    assert replay["rejected"] == [{"id": first["id"], "reason": "retracted"}]
+    since = datetime.now(UTC) - timedelta(hours=1)
+    assert api.app.state.store.reports_for_route("r1", "townbound", since) == []
+    unknown = api.delete(f"/api/v1/reports/{uuid4()}", params={"install_id": install})
+    assert unknown.status_code == 404
 
 
 def test_deletion_erases_and_blocks_replay_of_queued_reports(api):
@@ -201,10 +207,85 @@ def test_deletion_erases_and_blocks_replay_of_queued_reports(api):
     queued = report(install=install, minutes_ago=10)
     result = api.post("/api/v1/reports", json={"records": [queued]}).json()
     assert result["accepted_ids"] == [] and result["rejected"][0]["reason"] == "deleted_by_request"
-    # Reporting again later is a fresh choice.
-    later = report(install=install, minutes_ago=-1)
-    later["boarded_at"] = (datetime.now(UTC) + timedelta(seconds=30)).isoformat()
-    assert api.post("/api/v1/reports", json={"records": [later]}).json()["accepted_ids"]
+    # Reporting again is a fresh choice, made under a new installation ID.
+    assert api.post("/api/v1/reports", json={"records": [report()]}).json()["accepted_ids"]
+
+
+def test_deletion_holds_when_the_phone_clock_runs_ahead(api):
+    """An uploaded report stamped ahead of server time is deleted and then retried."""
+    install = str(uuid4())
+    ahead = report(install=install)
+    ahead["boarded_at"] = (datetime.now(UTC) + timedelta(seconds=90)).isoformat()
+    body = {"records": [ahead]}
+    assert api.post("/api/v1/reports", json=body).json()["accepted_ids"] == [ahead["id"]]
+    request = {"id": str(uuid4()), "install_id": install}
+    assert api.post("/api/v1/deletion-requests", json=request).json()["reports_deleted"] == 1
+    replay = api.post("/api/v1/reports", json=body).json()
+    assert replay["accepted_ids"] == [] and replay["duplicate_ids"] == []
+    assert replay["rejected"][0]["reason"] == "deleted_by_request"
+    # The retired ID stays retired, whatever timestamp a later report carries.
+    later = report(install=install)
+    later["boarded_at"] = (datetime.now(UTC) + timedelta(seconds=100)).isoformat()
+    assert api.post("/api/v1/reports", json={"records": [later]}).json()["accepted_ids"] == []
+    since = datetime.now(UTC) - timedelta(hours=1)
+    assert api.app.state.store.reports_for_route("r1", "townbound", since) == []
+
+
+def test_shared_write_token_is_off_unless_configured(tmp_path):
+    catalog = tmp_path / "catalog.json"
+    route = {"id": "r", "name": "R", "stage_ids": ["s"], "directions": ["townbound"]}
+    catalog.write_text(
+        json.dumps({"stages": [{"id": "s", "name": "S"}], "routes": [route]}), encoding="utf-8"
+    )
+    settings = Settings(
+        database=tmp_path / "db.sqlite3",
+        catalog=catalog,
+        runtime_dir=tmp_path / "runtime",
+        write_token="",
+        _env_file=None,
+    )
+    params = {"route_id": "r", "direction": "townbound"}
+    with TestClient(create_app(settings)) as client:
+        for guess in ("change-me-before-sharing", "anything"):
+            headers = {"X-Write-Token": guess}
+            assert client.get("/api/v1/demand", params=params, headers=headers).status_code == 503
+        # Access codes work without any shared token, and the token stays refused.
+        crew = bearer(client, "crew")
+        assert client.get("/api/v1/demand", params=params, headers=crew).status_code == 200
+        headers = {"X-Write-Token": "change-me-before-sharing"}
+        assert client.get("/api/v1/demand", params=params, headers=headers).status_code == 401
+
+
+def test_compose_file_has_no_default_write_token():
+    compose = (Path(__file__).resolve().parents[2] / "docker-compose.yml").read_text("utf-8")
+    assert "NGANYAFLOW_WRITE_TOKEN: ${NGANYAFLOW_WRITE_TOKEN:-}" in compose
+    assert "change-me" not in compose
+
+
+def test_seed_demo_keeps_codes_out_of_output(tmp_path, monkeypatch, capsys):
+    import stat
+    from types import SimpleNamespace
+
+    from nganyaflow import cli
+
+    monkeypatch.setenv("NGANYAFLOW_DATABASE", str(tmp_path / "db.sqlite3"))
+    monkeypatch.setenv("NGANYAFLOW_RUNTIME_DIR", str(tmp_path / "runtime"))
+    args = SimpleNamespace(
+        days=1,
+        test_days=1,
+        code_days=1,
+        skip_training=True,
+        show_codes=False,
+        enumerator_code="NF-TEST-ENUM",
+        crew_code=None,
+    )
+    cli.seed_demo(args)
+    output = capsys.readouterr().out
+    saved = tmp_path / "runtime" / "demo-access-codes.txt"
+    text = saved.read_text("utf-8")
+    assert "NF-TEST-ENUM" in text and "crew: NF-" in text
+    assert "NF-" not in output and "demo-access-codes.txt" in output
+    assert stat.S_IMODE(saved.stat().st_mode) == 0o600
 
 
 def test_daily_report_limit_per_install(api):

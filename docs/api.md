@@ -25,7 +25,8 @@ from one address return `429`. `GET /auth/me` returns `{"role"}`. Store tokens i
 encrypted storage, never in logs.
 
 A `403` means the token's role cannot use that endpoint. The shared `X-Write-Token`
-header still works for scripts and acts as a service role.
+header is for scripts only and acts as every role. It is disabled unless the operator sets
+`NGANYAFLOW_WRITE_TOKEN`; there is no default value. The app never uses it.
 
 ## Catalogue and status
 
@@ -73,18 +74,27 @@ boarded_at, consent_version}]}`, up to 100. Use the `consent_version` from `/met
 different one returns `422`. Response:
 `{"accepted_ids": [], "duplicate_ids": [], "rejected": [{"id", "reason"}]}`. Remove a
 queued report locally once its id is accepted or duplicate. `rejected.reason` is
-`deleted_by_request` or `daily_limit` (300 a day per install); drop those. Reports older
+`retracted` (the rider undid it), `deleted_by_request` (the install was deleted) or
+`daily_limit` (300 a day per install); drop those. Reports older
 than seven days or in the future return `422`.
 
-`DELETE /reports/{id}?install_id=` undoes one report (`204`, or `404` if not found).
+`DELETE /reports/{id}?install_id=` undoes one report (`204`, or `404` if it was never
+received). The server keeps a marker, so repeating the undo returns `204` again and a
+delayed retry of the original upload is refused as `retracted`. If the upload is still in
+flight when the rider taps Undo, wait for its result and then send the `DELETE`.
 
 ## Deletion
 
 `POST /deletion-requests` with `{"id": "<new uuid>", "install_id": "<uuid>"}` erases every
 report from that install. It completes immediately and is safe to retry:
 `{"id", "status": "completed", "reports_deleted", "requested_at", "completed_at", "note"}`.
-`GET /deletion-requests/{id}` returns the same, or `404`. After deleting, drop the local
-report queue. Reports queued before the request are refused if they upload later.
+`GET /deletion-requests/{id}` returns the same, or `404`.
+
+Deletion **retires the `install_id` permanently**. Every later report carrying it is
+refused as `deleted_by_request`, whatever its timestamp, so the outcome does not depend on
+the phone's clock. The app must, in this order: drop its local report queue, create a new
+random `install_id`, then queue the deletion request for the old one. A rider who reports
+again afterwards does so under the new id.
 
 ## Enumerator (role `enumerator`)
 

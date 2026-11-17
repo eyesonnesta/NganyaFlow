@@ -47,10 +47,14 @@ def seed_demo(args):
             lines.append(f"{role}: {code}")
         except Conflict:
             lines.append(f"{role}: {code} (already registered)")
+    # Codes are credentials: keep them out of logs. They go to an owner-only file.
     note = runtime / "demo-access-codes.txt"
+    note.touch(mode=0o600, exist_ok=True)
+    note.chmod(0o600)
     note.write_text("\n".join(lines) + f"\nvalid until {expires.isoformat()}\n", "utf-8")
-    print("Access codes (also saved to " + str(note) + "):")
-    print("\n".join("  " + line for line in lines))
+    print(f"Access codes for enumerator and crew saved to {note} (not shown here).")
+    if args.show_codes:
+        print("\n".join("  " + line for line in lines))
 
 
 def main():
@@ -76,6 +80,11 @@ def main():
     seed.add_argument("--enumerator-code", help="Use this code instead of a random one")
     seed.add_argument("--crew-code", help="Use this code instead of a random one")
     seed.add_argument("--skip-training", action="store_true")
+    seed.add_argument(
+        "--show-codes",
+        action="store_true",
+        help="Also print the codes. Only for a private terminal, never where output is logged",
+    )
     args = parser.parse_args()
     if args.command == "seed-demo":
         seed_demo(args)

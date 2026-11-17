@@ -10,11 +10,15 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      NGANYAFLOW_WRITE_TOKEN: ${NGANYAFLOW_WRITE_TOKEN:-change-me-before-sharing}
+      # Optional shared token for scripts. It acts as every role, so there is no default:
+      # unset means the token is disabled and only access codes can write.
+      NGANYAFLOW_WRITE_TOKEN: ${NGANYAFLOW_WRITE_TOKEN:-}
       # Keeps clearly labelled synthetic arrivals flowing so estimates are always live.
       NGANYAFLOW_DEMO_MODE: "1"
-      # Fixed demo codes for the Android app. Leave unset to generate random ones;
-      # they are then printed in the start-up log and saved in the runtime volume.
+      # Leave these unset on anything reachable from outside your machine: random codes
+      # are generated and saved to the runtime volume (never printed). Read them with
+      #   docker compose exec nganyaflow cat /app/runtime/demo-access-codes.txt
+      # Fixed codes are for a private local server only.
       NGANYAFLOW_DEMO_ENUMERATOR_CODE: ${NGANYAFLOW_DEMO_ENUMERATOR_CODE:-}
       NGANYAFLOW_DEMO_CREW_CODE: ${NGANYAFLOW_DEMO_CREW_CODE:-}
     volumes:

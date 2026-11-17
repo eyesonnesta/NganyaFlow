@@ -47,6 +47,9 @@ class Store:
                     completed_at TEXT, reports_deleted INTEGER NOT NULL DEFAULT 0
                 );
                 CREATE INDEX IF NOT EXISTS deletion_install ON deletion_requests(install_id);
+                CREATE TABLE IF NOT EXISTS retracted_reports (
+                    id TEXT PRIMARY KEY, install_id TEXT NOT NULL, retracted_at TEXT NOT NULL
+                );
             """)
 
     @contextmanager
@@ -316,12 +319,16 @@ class Store:
                         raise Conflict("Report ID reused with different content")
                     duplicates.append(ident)
                     continue
-                erased = db.execute(
-                    "SELECT 1 FROM deletion_requests WHERE install_id=? AND requested_at>=?",
-                    (install, record.boarded_at.isoformat()),
+                if db.execute("SELECT 1 FROM retracted_reports WHERE id=?", (ident,)).fetchone():
+                    # The rider undid this report; a delayed retry must not bring it back.
+                    rejected.append({"id": ident, "reason": "retracted"})
+                    continue
+                retired = db.execute(
+                    "SELECT 1 FROM deletion_requests WHERE install_id=?", (install,)
                 ).fetchone()
-                if erased:
-                    # Queued before the person asked for deletion: never resurrect it.
+                if retired:
+                    # Deletion retires the installation ID for good, so nothing depends on
+                    # comparing phone and server clocks. The app continues with a new ID.
                     rejected.append({"id": ident, "reason": "deleted_by_request"})
                     continue
                 recent = db.execute(
@@ -348,15 +355,31 @@ class Store:
         return {"accepted_ids": accepted, "duplicate_ids": duplicates, "rejected": rejected}
 
     def retract_report(self, report_id, install_id):
+        """Remove one report and keep a marker so a retried upload cannot restore it."""
         with self.connect() as db:
+            removed = db.execute(
+                "DELETE FROM reports WHERE id=? AND install_id=?", (report_id, install_id)
+            ).rowcount
+            if removed:
+                db.execute(
+                    "INSERT OR IGNORE INTO retracted_reports VALUES (?,?,?)",
+                    (report_id, install_id, _now()),
+                )
+                return True
+            # Repeating an undo (for example after a timeout) succeeds without change.
             return bool(
                 db.execute(
-                    "DELETE FROM reports WHERE id=? AND install_id=?", (report_id, install_id)
-                ).rowcount
+                    "SELECT 1 FROM retracted_reports WHERE id=? AND install_id=?",
+                    (report_id, install_id),
+                ).fetchone()
             )
 
     def delete_install(self, request_id, install_id):
-        """Erase every report of one install. Replaying the same request is safe."""
+        """Erase every report of one install and retire that install ID.
+
+        Replaying the same request is safe. Later uploads carrying the retired ID are
+        refused whatever their timestamp.
+        """
         with self.connect() as db:
             old = db.execute("SELECT * FROM deletion_requests WHERE id=?", (request_id,)).fetchone()
             if old:
