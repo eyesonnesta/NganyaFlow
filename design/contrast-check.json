@@ -1,0 +1,100 @@
+[
+  {
+    "mode": "light",
+    "foreground": "onPrimary",
+    "background": "primary",
+    "ratio": 9.6,
+    "normalTextPass": true
+  },
+  {
+    "mode": "light",
+    "foreground": "onPrimaryContainer",
+    "background": "primaryContainer",
+    "ratio": 11.13,
+    "normalTextPass": true
+  },
+  {
+    "mode": "light",
+    "foreground": "onSurface",
+    "background": "surface",
+    "ratio": 15.61,
+    "normalTextPass": true
+  },
+  {
+    "mode": "light",
+    "foreground": "onSurfaceVariant",
+    "background": "surfaceContainerLow",
+    "ratio": 6.93,
+    "normalTextPass": true
+  },
+  {
+    "mode": "light",
+    "foreground": "onErrorContainer",
+    "background": "errorContainer",
+    "ratio": 13.26,
+    "normalTextPass": true
+  },
+  {
+    "mode": "light",
+    "foreground": "onSuccessContainer",
+    "background": "successContainer",
+    "ratio": 9.67,
+    "normalTextPass": true
+  },
+  {
+    "mode": "light",
+    "foreground": "onWarningContainer",
+    "background": "warningContainer",
+    "ratio": 10.67,
+    "normalTextPass": true
+  },
+  {
+    "mode": "dark",
+    "foreground": "onPrimary",
+    "background": "primary",
+    "ratio": 7.64,
+    "normalTextPass": true
+  },
+  {
+    "mode": "dark",
+    "foreground": "onPrimaryContainer",
+    "background": "primaryContainer",
+    "ratio": 7.25,
+    "normalTextPass": true
+  },
+  {
+    "mode": "dark",
+    "foreground": "onSurface",
+    "background": "surface",
+    "ratio": 14.35,
+    "normalTextPass": true
+  },
+  {
+    "mode": "dark",
+    "foreground": "onSurfaceVariant",
+    "background": "surfaceContainerLow",
+    "ratio": 9.7,
+    "normalTextPass": true
+  },
+  {
+    "mode": "dark",
+    "foreground": "onErrorContainer",
+    "background": "errorContainer",
+    "ratio": 7.24,
+    "normalTextPass": true
+  },
+  {
+    "mode": "dark",
+    "foreground": "onSuccessContainer",
+    "background": "successContainer",
+    "ratio": 8.63,
+    "normalTextPass": true
+  },
+  {
+    "mode": "dark",
+    "foreground": "onWarningContainer",
+    "background": "warningContainer",
+    "ratio": 9.33,
+    "normalTextPass": true
+  }
+]

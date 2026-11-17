@@ -1,0 +1,169 @@
+{
+  "fileUrl": "https://www.figma.com/design/8gGZPr44bkjNq1zWNM4YYH",
+  "screens": {
+    "Welcome": {
+      "id": "5:636",
+      "body": "5:641"
+    },
+    "Privacy": {
+      "id": "5:671",
+      "body": "5:681"
+    },
+    "Stage": {
+      "id": "5:705",
+      "body": "5:710"
+    },
+    "Route": {
+      "id": "5:826",
+      "body": "5:836"
+    },
+    "Evidence": {
+      "id": "5:862",
+      "body": "5:872"
+    },
+    "Stage picker": {
+      "id": "5:893",
+      "body": "5:903"
+    },
+    "Routes": {
+      "id": "5:931",
+      "body": "5:936"
+    },
+    "Boarding": {
+      "id": "5:1027",
+      "body": "5:1037"
+    },
+    "Boarding selected": {
+      "id": "5:1065",
+      "body": "5:1075"
+    },
+    "Saved": {
+      "id": "5:1099",
+      "body": "5:1109"
+    },
+    "Access": {
+      "id": "5:1135",
+      "body": "5:1145"
+    },
+    "Setup": {
+      "id": "5:1169",
+      "body": "5:1179"
+    },
+    "Logging": {
+      "id": "5:1203",
+      "body": "5:1213"
+    },
+    "Summary": {
+      "id": "5:1245",
+      "body": "5:1255"
+    },
+    "Crew": {
+      "id": "5:1278",
+      "body": "5:1288"
+    },
+    "Activity": {
+      "id": "5:1310",
+      "body": "5:1315"
+    },
+    "Settings": {
+      "id": "5:1408",
+      "body": "5:1413"
+    },
+    "Sync": {
+      "id": "5:1508",
+      "body": "5:1518"
+    },
+    "Offline": {
+      "id": "5:1544",
+      "body": "5:1549"
+    },
+    "Data": {
+      "id": "5:1635",
+      "body": "5:1645"
+    },
+    "No data": {
+      "id": "5:1666",
+      "body": "5:1676"
+    },
+    "Location": {
+      "id": "5:1698",
+      "body": "5:1708"
+    },
+    "Location denied": {
+      "id": "5:1729",
+      "body": "5:1739"
+    },
+    "Search empty": {
+      "id": "5:1754",
+      "body": "5:1764"
+    },
+    "Sync failure": {
+      "id": "5:1781",
+      "body": "5:1791"
+    },
+    "Consent gate": {
+      "id": "7:992",
+      "body": "7:992"
+    },
+    "PrivacyOn": {
+      "id": "7:1015",
+      "body": "7:1015"
+    },
+    "Boarding selected B": {
+      "id": "7:1032",
+      "body": "7:1032"
+    },
+    "Saved B": {
+      "id": "7:1049",
+      "body": "7:1049"
+    },
+    "Arrival saved": {
+      "id": "7:1066",
+      "body": "7:1066"
+    },
+    "Departure saved": {
+      "id": "7:1084",
+      "body": "7:1084"
+    },
+    "Session closed": {
+      "id": "7:1101",
+      "body": "7:1101"
+    },
+    "Synced": {
+      "id": "7:1118",
+      "body": "7:1118"
+    },
+    "Delete": {
+      "id": "7:1135",
+      "body": "7:1135"
+    },
+    "Deletion pending": {
+      "id": "7:1152",
+      "body": "7:1152"
+    },
+    "Language": {
+      "id": "7:1170",
+      "body": "7:1170"
+    },
+    "Notifications": {
+      "id": "7:1187",
+      "body": "7:1187"
+    },
+    "Loading": {
+      "id": "7:1198",
+      "body": "7:1198"
+    },
+    "Occupancy": {
+      "id": "7:1215",
+      "body": "7:1215"
+    },
+    "Stage selected": {
+      "id": "7:1244",
+      "body": "7:1244"
+    },
+    "Dark": {
+      "id": "7:1261",
+      "body": "7:1261"
+    }
+  }
+}
