@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NganyaFlow</string>
+    <string name="stage">Kituo</string>
+    <string name="routes">Njia</string>
+    <string name="activity">Shughuli</string>
+    <string name="settings">Mipangilio</string>
+    <string name="retry">Jaribu tena</string>
+    <string name="loading">Tunaunganisha kituo chako</string>
+    <string name="loading_detail">Tunapata orodha mpya kutoka kwenye seva.</string>
+    <string name="connection_error">Hatukuweza kufikia seva</string>
+    <string name="connection_detail">Angalia muunganisho wako na uhakikishe seva ya majaribio inaendelea.</string>
+    <string name="choose_stage">Chagua kituo chako</string>
+    <string name="stage_intro">Taarifa bora kwa safari yako inayofuata.</string>
+    <string name="next_vehicle">Gari linalofuata</string>
+    <string name="demo_data">Data ya majaribio</string>
+    <string name="no_reports">Safari zako zinaanza hapa</string>
+    <string name="no_reports_detail">Ripoti za kupanda gari zilizohifadhiwa kwenye simu hii zitaonekana hapa pamoja na hali ya kutumwa na chaguo la kutengua.</string>
+    <string name="browse_routes">Angalia njia</string>
+    <string name="route_catalogue">Tafuta njia yako</string>
+    <string name="settings_heading">NganyaFlow yako</string>
+    <string name="server_connection">Muunganisho wa seva</string>
+    <string name="refresh_catalogue">Sasisha orodha</string>
+    <string name="privacy_summary">Kuangalia hakuhitaji akaunti, ruhusa ya eneo au idhini ya utafiti.</string>
+    <string name="no_stages">Hakuna vituo katika orodha hii</string>
+    <string name="no_stages_detail">Jaribu kusasisha orodha.</string>
+    <string name="no_routes">Hakuna njia katika orodha hii</string>
+    <string name="route_count">Njia %1$d katika orodha</string>
+    <string name="stage_count">Vituo %1$d katika orodha</string>
+    <string name="min">dak</string>
+    <string name="wait_range">Dakika %1$s–%2$s</string>
+    <string name="range_semantics">Muda wa kusubiri ni dakika %1$s hadi %2$s; thamani ya kati ni dakika %3$s</string>
+    <string name="estimate_unavailable">Hakuna makadirio</string>
+    <string name="evidence_limited">Taarifa chache</string>
+    <string name="evidence_recent">Uchunguzi wa hivi karibuni</string>
+    <string name="empty">Tupu</string>
+    <string name="seats_available">Viti vinapatikana</string>
+    <string name="standing">Kusimama</string>
+    <string name="full">Limejaa</string>
+    <string name="unknown">Msongamano haujulikani</string>
+    <string name="search_routes">Tafuta njia</string>
+    <string name="search_again">Jaribu jina au nambari nyingine ya njia.</string>
+</resources>

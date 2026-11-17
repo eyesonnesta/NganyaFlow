@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NganyaFlow</string>
+    <string name="stage">Stage</string>
+    <string name="routes">Routes</string>
+    <string name="activity">Activity</string>
+    <string name="settings">Settings</string>
+    <string name="retry">Try again</string>
+    <string name="loading">Connecting to your stage</string>
+    <string name="loading_detail">Getting the latest catalogue from the server.</string>
+    <string name="connection_error">Could not reach the server</string>
+    <string name="connection_detail">Check your connection and make sure the local demo server is running.</string>
+    <string name="choose_stage">Choose your stage</string>
+    <string name="stage_intro">A little more certainty for your next journey.</string>
+    <string name="next_vehicle">Next vehicle</string>
+    <string name="demo_data">Demo data</string>
+    <string name="no_reports">Your journeys start here</string>
+    <string name="no_reports_detail">Boarding reports saved on this phone appear here, with their upload status and undo action.</string>
+    <string name="browse_routes">Browse routes</string>
+    <string name="route_catalogue">Find your way</string>
+    <string name="settings_heading">Your NganyaFlow</string>
+    <string name="server_connection">Server connection</string>
+    <string name="refresh_catalogue">Refresh catalogue</string>
+    <string name="privacy_summary">Browsing needs no account, location permission or research consent.</string>
+    <string name="no_stages">No stages in this catalogue</string>
+    <string name="no_stages_detail">Try refreshing the catalogue.</string>
+    <string name="no_routes">No routes in this catalogue</string>
+    <string name="route_count">%1$d routes in the catalogue</string>
+    <string name="stage_count">%1$d stages in the catalogue</string>
+    <string name="min">min</string>
+    <string name="wait_range">%1$s–%2$s min</string>
+    <string name="range_semantics">Wait range %1$s to %2$s minutes; median %3$s minutes</string>
+    <string name="estimate_unavailable">No estimate</string>
+    <string name="evidence_limited">Limited evidence</string>
+    <string name="evidence_recent">Recent observations</string>
+    <string name="empty">Empty</string>
+    <string name="seats_available">Seats available</string>
+    <string name="standing">Standing</string>
+    <string name="full">Full</string>
+    <string name="unknown">Unknown crowding</string>
+    <string name="search_routes">Search routes</string>
+    <string name="search_again">Try another route name or number.</string>
+</resources>
