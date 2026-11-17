@@ -475,3 +475,161 @@ def test_live_simulator_adds_open_synthetic_sessions(api):
     # No model is loaded in this fixture, so the server must say why it has no number.
     assert estimate["status"] == "unavailable"
     assert estimate["reason"] in {"model_not_trained", "insufficient_evidence"}
+
+
+def test_vehicle_label_standing_and_void_are_idempotent_and_excluded(api, tmp_path):
+    import csv
+    from types import SimpleNamespace
+
+    from nganyaflow import cli
+    from nganyaflow.schemas import Session
+
+    enum, crew = bearer(api, "enumerator"), bearer(api, "crew")
+    now = datetime.now(UTC)
+    sid = str(uuid4())
+    api.app.state.store.add_session(Session(
+        id=sid, stage_id="mid", route_id="r1", direction="townbound",
+        started_at=now - timedelta(hours=1),
+    ))
+    records = [
+        {"id": str(uuid4()), "session_id": sid, "event_type": "arrival",
+         "observed_at": (now - timedelta(minutes=m)).isoformat(),
+         "occupancy": "standing", "vehicle_label": f"Vehicle {i:02d}"}
+        for i, m in enumerate((15, 10, 5), 1)
+    ]
+    sync = "/api/v1/observations/sync"
+    bad = dict(records[0], vehicle_label="x" * 21)
+    assert api.post(sync, headers=enum, json={"records": [bad]}).status_code == 422
+    assert api.post(sync, headers=enum, json={"records": records}).status_code == 200
+    params = {"stage_id": "mid", "route_id": "r1", "direction": "townbound"}
+    before = api.get("/api/v1/estimates", params=params).json()
+    assert before["evidence_count"] == 3 and before["occupancy"] == "standing"
+    ident = records[-1]["id"]
+    path = f"/api/v1/observations/{ident}/void"
+    assert api.post(path).status_code == 401
+    assert api.post(path, headers=crew).status_code == 403
+    for _ in range(2):
+        assert api.post(path, headers=enum).json() == {"id": ident, "status": "voided"}
+    replay = api.post(sync, headers=enum, json={"records": records}).json()
+    assert replay["duplicate_ids"] == [r["id"] for r in records]
+    after = api.get("/api/v1/estimates", params=params).json()
+    assert after["evidence_count"] == 2 and after["reason"] == "insufficient_evidence"
+    assert api.post(f"/api/v1/observations/{uuid4()}/void", headers=enum).status_code == 404
+    demand = api.get("/api/v1/demand", headers=crew,
+                     params={"route_id": "r1", "direction": "townbound"}).json()
+    mid = next(r for r in demand["stages"] if r["stage_id"] == "mid")
+    assert mid["observed_arrivals"] == 2
+    assert datetime.fromisoformat(mid["latest_arrival_at"]) == now - timedelta(minutes=10)
+    api.app.state.store.close_session(sid, now)
+    assert ident not in {r["id"] for r in api.app.state.store.arrivals(closed_only=True)}
+    # Exercise the actual CSV-export path and verify original records remain in storage.
+    output = tmp_path / "arrivals.csv"
+    from unittest.mock import patch
+
+    with patch.object(cli, "Settings", return_value=SimpleNamespace(
+        database=api.app.state.store.path, resolve=lambda p: p,
+    )), patch("sys.argv", ["nganyaflow", "export", "--output", str(output)]):
+        cli.main()
+    with output.open(encoding="utf-8", newline="") as handle:
+        exported = list(csv.DictReader(handle))
+    assert len(exported) == 2 and ident not in {r["id"] for r in exported}
+    assert {r["vehicle_label"] for r in exported} == {"Vehicle 01", "Vehicle 02"}
+    with api.app.state.store.connect() as db:
+        assert db.execute("SELECT COUNT(*) FROM observations WHERE id=?", (ident,)).fetchone()[0] == 1
+
+
+def test_estimate_uses_freshest_session_with_enough_recent_arrivals(api):
+    # The second session has the latest arrival but too little evidence by itself.
+    seed_arrivals(api, "mid", "townbound", [25, 15, 5], occupancy="standing")
+    seed_arrivals(api, "mid", "townbound", [1], occupancy="full")
+    params = {"stage_id": "mid", "route_id": "r1", "direction": "townbound"}
+    estimate = api.get("/api/v1/estimates", params=params).json()
+    assert estimate["evidence_count"] == 3
+    assert estimate["reason"] == "model_not_trained"
+    assert estimate["occupancy"] == "standing"
+    # Once a more recent continuous session qualifies, use it.
+    seed_arrivals(api, "mid", "townbound", [12, 7, 2], occupancy="empty")
+    assert api.get("/api/v1/estimates", params=params).json()["occupancy"] == "empty"
+
+
+def test_simulator_skips_active_practice_session_and_resumes_without_gap_backfill(api, monkeypatch):
+    from nganyaflow import demo
+    from nganyaflow.schemas import Observation, Session
+
+    store = api.app.state.store
+    real_now = datetime.now(UTC)
+    clock = [real_now - timedelta(minutes=10)]
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return clock[0].astimezone(tz) if tz else clock[0].replace(tzinfo=None)
+
+    monkeypatch.setattr(demo, "datetime", Clock)
+    monkeypatch.setattr(demo, "regime", lambda *args: 0.0005)
+    human = Session(id=uuid4(), stage_id="mid", route_id="r1", direction="townbound",
+                    started_at=real_now - timedelta(minutes=20), data_kind="synthetic",
+                    dataset_id="android-practice")
+    store.add_session(human)
+    group = ("mid", "r1", "townbound")
+
+    class Stop:
+        loops = 0
+
+        def wait(self, interval):
+            self.loops += 1
+            if self.loops == 1:
+                assert store.arrivals_for(group) == []
+                store.close_session(str(human.id), clock[0])
+                clock[0] += timedelta(minutes=1)
+                return False
+            return True
+
+    stop = Stop()
+    demo.run_live_simulator(store, api.app.state.catalog, stop, backfill_hours=1)
+    resumed = store.arrivals_for(group)
+    assert len(resumed) == 1
+    assert datetime.fromisoformat(resumed[0]["observed_at"]) > real_now - timedelta(minutes=10)
+    # A human starting after the loop's group read is caught inside add_batch's transaction.
+    human2 = human.model_copy(update={"id": uuid4()})
+    store.add_session(human2)
+    event = Observation(id=uuid4(), session_id=resumed[0]["session_id"],
+                        observed_at=real_now - timedelta(minutes=1), event_type="arrival")
+    assert store.add_batch([event], simulator=True)["accepted_ids"] == []
+
+
+def test_simulator_start_recovers_only_live_sessions_and_preserves_seed_history(api):
+    from nganyaflow import demo
+    from nganyaflow.schemas import Observation, Session
+
+    store = api.app.state.store
+    now = datetime.now(UTC)
+    sessions = []
+    old_ids, new_ids = [], []
+    for dataset in (demo.LIVE_DATASET_ID, demo.DATASET_ID, "android-practice"):
+        session = Session(id=uuid4(), stage_id="mid", route_id="r1", direction="townbound",
+                          started_at=now - timedelta(hours=30), data_kind="synthetic",
+                          dataset_id=dataset)
+        store.add_session(session)
+        sessions.append(session)
+        old, new = [Observation(id=uuid4(), session_id=session.id,
+                                observed_at=now - age, event_type="arrival")
+                    for age in (timedelta(hours=25), timedelta(minutes=5))]
+        store.add_batch([old, new])
+        old_ids.append(str(old.id))
+        new_ids.append(str(new.id))
+    store.close_session(str(sessions[1].id), now - timedelta(minutes=1))
+
+    class Stop:
+        def wait(self, interval):
+            return True
+
+    demo.run_live_simulator(store, api.app.state.catalog, Stop(), backfill_hours=0)
+    with store.connect() as db:
+        ended = {r["id"]: r["ended_at"] for r in db.execute("SELECT id,ended_at FROM sessions")}
+        remaining = {r[0] for r in db.execute("SELECT id FROM observations")}
+    assert ended[str(sessions[0].id)] is not None
+    assert ended[str(sessions[1].id)] == (now - timedelta(minutes=1)).isoformat()
+    assert ended[str(sessions[2].id)] is None
+    assert old_ids[0] not in remaining
+    assert set(old_ids[1:] + new_ids) <= remaining

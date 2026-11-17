@@ -224,6 +224,14 @@ def create_app(settings: Settings | None = None):
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
 
+    @app.post("/api/v1/observations/{observation_id}/void", dependencies=[Depends(enumerator)])
+    def void_observation(observation_id: UUID):
+        try:
+            app.state.store.void_observation(str(observation_id))
+        except KeyError as exc:
+            raise HTTPException(404, "Unknown observation") from exc
+        return {"id": observation_id, "status": "voided"}
+
     # ---- waiting-time estimates ---------------------------------------------------------
 
     def compute_estimate(stage_id, route_id, direction):
@@ -236,8 +244,18 @@ def create_app(settings: Settings | None = None):
             for r in app.state.store.arrivals_for(group)
             if key(r) == group and timestamp(r["observed_at"]) <= now
         ]
-        # Keep recent evidence within one continuous observation session.
+        # Choose the freshest continuous session with enough recent arrivals. A new
+        # session with only one event must not hide still-valid evidence from another.
         evidence.sort(key=lambda r: timestamp(r["observed_at"]))
+        sessions = defaultdict(list)
+        for row in evidence:
+            if now - timestamp(row["observed_at"]) <= timedelta(
+                minutes=settings.max_evidence_age_minutes
+            ):
+                sessions[row["session_id"]].append(row)
+        eligible = [rows for rows in sessions.values() if len(rows) >= settings.min_recent_arrivals]
+        if eligible:
+            evidence = max(eligible, key=lambda rows: timestamp(rows[-1]["observed_at"]))
         latest = timestamp(evidence[-1]["observed_at"]) if evidence else None
         recent = (
             [

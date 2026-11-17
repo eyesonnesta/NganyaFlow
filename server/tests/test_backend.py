@@ -236,6 +236,19 @@ def test_prediction_and_admin_activation(client, tmp_path):
     assert result["status"] == "available", result
     assert 0 <= result["lower_minutes"] <= result["median_minutes"] <= result["upper_minutes"]
     assert result["expires_at"] and result["model_version"]
+    # A newer field session with just one event must not replace the usable
+    # continuous session (or cause a false provenance mismatch).
+    newer = dict(
+        SCOPE, id=str(uuid4()), started_at=(now - timedelta(minutes=1)).isoformat(),
+        data_kind="field",
+    )
+    assert client.post("/api/v1/sessions", json=newer, headers=AUTH).status_code == 200
+    one = dict(event(newer["id"]), observed_at=(now - timedelta(seconds=30)).isoformat())
+    assert client.post(
+        "/api/v1/observations/sync", json={"records": [one]}, headers=AUTH
+    ).status_code == 200
+    fallback = client.get("/api/v1/estimates", params=SCOPE).json()
+    assert fallback["status"] == "available" and fallback["evidence_count"] == 3
     client.app.state.model["trained_at"] = (now - timedelta(days=31)).isoformat()
     assert client.get("/api/v1/estimates", params=SCOPE).json()["reason"] == "model_expired"
 

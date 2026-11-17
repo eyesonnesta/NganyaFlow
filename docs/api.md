@@ -62,7 +62,9 @@ When `status` is `unavailable`, the numbers are null and `reason` is one of
 `unsupported_training_group`, `outside_training_support`, `evidence_provenance_mismatch`.
 Show the range `lower–upper`, never only the median. Hide the numbers once `expires_at`
 has passed. Say "next vehicle", not a boarding promise: seats are never guaranteed.
-`occupancy` is `empty`, `seats_available`, `full` or `unknown`; show its age.
+`occupancy` is `empty`, `seats_available`, `standing`, `full` or `unknown`; show its age.
+Evidence comes from the freshest session with at least three arrivals in the recent
+evidence window, rather than letting a newer one-event session hide valid evidence.
 
 ## Boarding reports (riders, anonymous)
 
@@ -101,14 +103,31 @@ again afterwards does so under the new id.
 1. `POST /sessions` with `{id, stage_id, route_id, direction, started_at, data_kind,
    dataset_id}`. `data_kind` is `field` for real observation. Generate ids on the phone.
 2. `POST /observations/sync` with `{"records": [{id, session_id, observed_at, event_type,
-   occupancy}]}`, up to 500. `event_type` is `arrival` or `departure`. Upload the session
+   occupancy, vehicle_label}]}`, up to 500. `event_type` is `arrival` or `departure`.
+   `vehicle_label` is optional text of at most 20 characters: a session-local label such
+   as "Vehicle 01", never a number plate. `occupancy` also accepts `standing`.
+   Upload the session
    before its observations. Identical retries return `duplicate_ids`; reusing an id with
    different content is `409`; a rejected batch stores nothing.
 3. `PUT /sessions/{id}/end` with `{"ended_at"}`. Start a new session after any pause.
+4. `POST /observations/{id}/void` (no body) corrects a mistaken event. Response
+   `{"id": "<uuid>", "status": "voided"}`. The original event is retained but excluded
+   from estimates, crew arrivals/crowding, and training/export arrival queries.
+   Repeating the call succeeds; an unknown id returns `404`. Requires an enumerator
+   token (`403` for a crew token). Retrying the original observation upload cannot
+   clear its void marker.
 
 Observations must lie inside their session and not in the future (`422` otherwise).
 Because the demo model is synthetic, a session marked `field` makes that stage's estimate
 `evidence_provenance_mismatch` until a field-trained model is activated.
+
+In demo mode the live simulator skips a stage/route/direction while any non-simulator
+session there is open, including an `android-practice` synthetic session. It resumes
+after that session ends, without inventing events for the pause. On startup it closes
+leftover live-simulator sessions and removes only live-simulator observations older
+than 24 hours. Seeded training history and human observations are preserved.
+Newly seeded synthetic history uses dataset id `nairobi-network-synthetic-v2` so the
+updated crowding generator does not overwrite or conflict with existing v1 records.
 
 ## Crew (role `crew`)
 

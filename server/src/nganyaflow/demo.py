@@ -17,7 +17,9 @@ from .schemas import CloseSession, Observation, Session
 logger = logging.getLogger("uvicorn.error")
 
 NAIROBI = ZoneInfo("Africa/Nairobi")
-DATASET_ID = "nairobi-network-synthetic-v1"
+# Occupancy generation changed with the standing level; use new deterministic IDs
+# rather than conflict with already imported v1 records when seed-demo is rerun.
+DATASET_ID = "nairobi-network-synthetic-v2"
 LIVE_DATASET_ID = "nairobi-network-synthetic-live"
 
 # Typical minutes between vehicles in the busiest period. Generator assumptions only.
@@ -78,8 +80,8 @@ def occupancy(rng, group, local):
     rush = (6 <= local.hour < 9 and direction == "townbound") or (
         16 <= local.hour < 19 and direction == "outbound"
     )
-    weights = (0.1, 0.35, 0.45, 0.1) if rush else (0.25, 0.6, 0.05, 0.1)
-    return rng.choices(["empty", "seats_available", "full", "unknown"], weights)[0]
+    weights = (0.1, 0.25, 0.2, 0.35, 0.1) if rush else (0.25, 0.5, 0.1, 0.05, 0.1)
+    return rng.choices(["empty", "seats_available", "standing", "full", "unknown"], weights)[0]
 
 
 def generate_history(catalog, today=None, days=12, sessions_per_day=2, minutes=40):
@@ -160,7 +162,8 @@ def run_live_simulator(store, catalog, stop, *, interval=20.0, backfill_hours=2)
     """
     groups = served_groups(catalog)
     now = datetime.now(UTC)
-    token = now.strftime("%Y%m%dT%H%M%S")
+    store.clean_simulator(LIVE_DATASET_ID, now)
+    token = now.strftime("%Y%m%dT%H%M%S%f")
     state = {}
     started = now - timedelta(hours=backfill_hours)
     try:
@@ -195,7 +198,14 @@ def run_live_simulator(store, catalog, stop, *, interval=20.0, backfill_hours=2)
     while True:
         moment = datetime.now(UTC)
         batch = []
+        blocked = store.non_simulator_groups(LIVE_DATASET_ID)
         for group, s in state.items():
+            if group in blocked:
+                # Advance the schedule without inventing observations during the gap.
+                s["next"] = moment + timedelta(
+                    minutes=regime(group, moment.astimezone(NAIROBI))
+                )
+                continue
             while s["next"] <= moment:
                 local = s["next"].astimezone(NAIROBI)
                 batch.append(
@@ -212,7 +222,9 @@ def run_live_simulator(store, catalog, stop, *, interval=20.0, backfill_hours=2)
                 s["next"] += timedelta(seconds=round(s["previous"] * 60))
         if batch:
             try:
-                store.add_batch(batch)
+                # Recheck under the same write transaction, in case a human started
+                # a session between the blocked-group read and this upload.
+                store.add_batch(batch, simulator=True)
             except Exception:
                 logger.exception("Demo simulator batch failed")
         if stop.wait(interval):

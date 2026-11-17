@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
 Direction = Literal["townbound", "outbound"]
+Occupancy = Literal["empty", "seats_available", "standing", "full", "unknown"]
 
 
 class Record(BaseModel):
@@ -64,7 +65,8 @@ class Observation(Record):
     session_id: UUID
     observed_at: AwareDatetime
     event_type: Literal["arrival", "departure"]
-    occupancy: Literal["empty", "seats_available", "full", "unknown"] = "unknown"
+    occupancy: Occupancy = "unknown"
+    vehicle_label: str | None = Field(default=None, max_length=20)
 
     _past = field_validator("observed_at")(classmethod(Session.past_time.__func__))
 
@@ -85,7 +87,7 @@ class Estimate(Record):
     expires_at: datetime | None = None
     model_version: str | None = None
     data_kind: str | None = None
-    occupancy: Literal["empty", "seats_available", "full", "unknown"] = "unknown"
+    occupancy: Occupancy = "unknown"
     occupancy_observed_at: datetime | None = None
 
 

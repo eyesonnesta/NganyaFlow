@@ -26,6 +26,10 @@ class Store:
                     UNIQUE(session_id, observed_at, event_type)
                 );
                 CREATE INDEX IF NOT EXISTS observation_session ON observations(session_id);
+                CREATE TABLE IF NOT EXISTS voided_observations (
+                    id TEXT PRIMARY KEY REFERENCES observations(id) ON DELETE CASCADE,
+                    voided_at TEXT NOT NULL
+                );
                 CREATE TABLE IF NOT EXISTS access_codes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, code_hash TEXT NOT NULL UNIQUE,
                     role TEXT NOT NULL, label TEXT NOT NULL, created_at TEXT NOT NULL,
@@ -97,13 +101,13 @@ class Store:
                 "UPDATE sessions SET ended_at=? WHERE id=?", (ended_at.isoformat(), session_id)
             )
 
-    def add_batch(self, records):
+    def add_batch(self, records, *, simulator=False):
         from datetime import datetime
 
         accepted, duplicates = [], []
         with self.connect() as db:
             for record in records:
-                ident, payload = str(record.id), record.model_dump_json()
+                ident, payload = str(record.id), record.model_dump_json(exclude_none=True)
                 old = db.execute("SELECT payload FROM observations WHERE id=?", (ident,)).fetchone()
                 if old:
                     if old[0] != payload:
@@ -115,7 +119,20 @@ class Store:
                 ).fetchone()
                 if not session:
                     raise ValueError("Upload the session before its observations")
-                start = datetime.fromisoformat(json.loads(session["payload"])["started_at"])
+                scope = json.loads(session["payload"])
+                if simulator and db.execute(
+                    """SELECT 1 FROM sessions WHERE ended_at IS NULL
+                       AND json_extract(payload,'$.dataset_id') != ?
+                       AND json_extract(payload,'$.stage_id')=?
+                       AND json_extract(payload,'$.route_id')=?
+                       AND json_extract(payload,'$.direction')=? LIMIT 1""",
+                    (
+                        scope["dataset_id"], scope["stage_id"], scope["route_id"],
+                        scope["direction"],
+                    ),
+                ).fetchone():
+                    continue
+                start = datetime.fromisoformat(scope["started_at"])
                 end = datetime.fromisoformat(session["ended_at"]) if session["ended_at"] else None
                 if record.observed_at < start or (end and record.observed_at > end):
                     raise ValueError("Observation lies outside its session")
@@ -140,6 +157,7 @@ class Store:
             rows = db.execute("""
                 SELECT o.payload AS event, s.payload AS session, s.ended_at FROM observations o
                 JOIN sessions s ON o.session_id=s.id WHERE o.event_type='arrival'
+                  AND NOT EXISTS (SELECT 1 FROM voided_observations v WHERE v.id=o.id)
             """).fetchall()
         return [
             dict(json.loads(r["session"]), **json.loads(r["event"]))
@@ -160,7 +178,7 @@ class Store:
                 else:
                     db.execute("INSERT INTO sessions VALUES (?,?,?)", (sid, payload, end))
             for event in events:
-                ident, payload = str(event.id), event.model_dump_json()
+                ident, payload = str(event.id), event.model_dump_json(exclude_none=True)
                 old = db.execute("SELECT payload FROM observations WHERE id=?", (ident,)).fetchone()
                 if old:
                     if old[0] != payload:
@@ -198,6 +216,7 @@ class Store:
                 SELECT o.payload AS event, s.payload AS session FROM observations o
                 JOIN sessions s ON o.session_id=s.id
                 WHERE o.event_type='arrival'
+                  AND NOT EXISTS (SELECT 1 FROM voided_observations v WHERE v.id=o.id)
                   AND json_extract(s.payload,'$.stage_id')=?
                   AND json_extract(s.payload,'$.route_id')=?
                   AND json_extract(s.payload,'$.direction')=?
@@ -213,12 +232,60 @@ class Store:
                 SELECT o.payload AS event, s.payload AS session FROM observations o
                 JOIN sessions s ON o.session_id=s.id
                 WHERE o.event_type='arrival'
+                  AND NOT EXISTS (SELECT 1 FROM voided_observations v WHERE v.id=o.id)
                   AND json_extract(s.payload,'$.route_id')=?
                   AND json_extract(s.payload,'$.direction')=?
                 """,
                 (route_id, direction),
             ).fetchall()
         return [dict(json.loads(r["session"]), **json.loads(r["event"])) for r in rows]
+
+    def void_observation(self, observation_id):
+        """Keep the original record while excluding it from every arrival query."""
+        with self.connect() as db:
+            if not db.execute(
+                "SELECT 1 FROM observations WHERE id=?", (observation_id,)
+            ).fetchone():
+                raise KeyError(observation_id)
+            db.execute(
+                "INSERT OR IGNORE INTO voided_observations VALUES (?,?)",
+                (observation_id, _now()),
+            )
+
+    def non_simulator_groups(self, dataset_id):
+        with self.connect() as db:
+            rows = db.execute(
+                """SELECT payload FROM sessions WHERE ended_at IS NULL
+                   AND json_extract(payload,'$.dataset_id') != ?""", (dataset_id,)
+            ).fetchall()
+        return {
+            (s["stage_id"], s["route_id"], s["direction"])
+            for s in (json.loads(r["payload"]) for r in rows)
+        }
+
+    def clean_simulator(self, dataset_id, now):
+        """Recover only live-simulator sessions and trim only their old observations."""
+        with self.connect() as db:
+            leftovers = db.execute(
+                """SELECT s.id, s.payload, MAX(o.observed_at) AS latest FROM sessions s
+                   LEFT JOIN observations o ON o.session_id=s.id
+                   WHERE s.ended_at IS NULL AND json_extract(s.payload,'$.dataset_id')=?
+                   GROUP BY s.id""", (dataset_id,)
+            ).fetchall()
+            for session in leftovers:
+                start = datetime.fromisoformat(json.loads(session["payload"])["started_at"])
+                latest = datetime.fromisoformat(session["latest"]) if session["latest"] else start
+                end = max(now, start, latest)
+                db.execute(
+                    "UPDATE sessions SET ended_at=? WHERE id=?",
+                    (end.isoformat(), session["id"]),
+                )
+            removed = db.execute(
+                """DELETE FROM observations WHERE observed_at<? AND session_id IN
+                   (SELECT id FROM sessions WHERE json_extract(payload,'$.dataset_id')=?)""",
+                ((now - timedelta(hours=24)).isoformat(), dataset_id),
+            ).rowcount
+        return {"closed_sessions": len(leftovers), "removed_observations": removed}
 
     # ---- access codes and tokens -----------------------------------------------
 

@@ -104,6 +104,7 @@ def main():
             "observed_at",
             "event_type",
             "occupancy",
+            "vehicle_label",
             "data_kind",
             "dataset_id",
         ]
