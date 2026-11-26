@@ -18,7 +18,13 @@ android {
         buildConfigField("String", "DEFAULT_SERVER_URL", "\"https://localhost/\"")
     }
     buildTypes {
-        debug { buildConfigField("String", "DEFAULT_SERVER_URL", "\"http://10.0.2.2:8000/\"") }
+        debug {
+            // Override with -Pnganyaflow.debugServerUrl=http://10.0.2.2:8010/ when the local
+            // server listens on another host port. Debug cleartext stays limited to local hosts.
+            val debugServerUrl = providers.gradleProperty("nganyaflow.debugServerUrl")
+                .getOrElse("http://10.0.2.2:8000/")
+            buildConfigField("String", "DEFAULT_SERVER_URL", "\"$debugServerUrl\"")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
