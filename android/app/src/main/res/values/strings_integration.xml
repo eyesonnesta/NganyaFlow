@@ -1,0 +1,8 @@
+<resources>
+<string name="integration_board">I’m boarding</string>
+<string name="integration_crowding">Crowding</string>
+<string name="integration_about">About this estimate</string>
+<string name="integration_access">Field team and crew</string>
+<string name="integration_enumerator">Observation session</string>
+<string name="integration_alerts">Wait alerts</string>
+</resources>

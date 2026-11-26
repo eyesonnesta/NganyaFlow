@@ -1,0 +1,26 @@
+<resources>
+<string name="crew_controls">%1$s · %2$d min · Change filters</string>
+<string name="crew_title">Route activity</string>
+<string name="crew_participation">Participating riders only</string>
+<string name="crew_disclaimer">These counts describe riders who report in this app. They are not total passengers or total demand.</string>
+<string name="crew_access_required">Sign in with a crew access code. Enumerator codes cannot view crew activity.</string>
+<string name="crew_sign_in">Enter access code</string>
+<string name="crew_choose_route">Choose route</string>
+<string name="crew_townbound">Towards town</string>
+<string name="crew_outbound">Away from town</string>
+<string name="crew_window">%1$d min</string>
+<string name="crew_refresh">Refresh</string>
+<string name="crew_no_data">No data</string>
+<string name="crew_as_of">Updated %1$s · Nairobi time</string>
+<string name="crew_reports">%1$d boarding reports</string>
+<string name="crew_arrivals">%1$d observed arrivals</string>
+<string name="crew_ok">Recent app reports</string>
+<string name="crew_limited">Limited data</string>
+<string name="crew_wait_available">Current wait estimate available</string>
+<string name="crew_wait_unavailable">No current wait estimate</string>
+<string name="crew_crowding_time">Crowding recorded: %1$s</string>
+<string name="crew_last_arrival">Latest arrival: %1$s</string>
+<string name="crew_unknown_time">Not observed</string>
+<string name="crew_limits">Limited means fewer than %1$d reports. Counts may omit many riders.</string>
+<string name="crew_no_advice">No hold-or-depart recommendation is offered.</string>
+</resources>
