@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NganyaFlow · Wait simulator</title><link rel="stylesheet" href="/assets/style.css">
+<script defer src="/assets/demo.js"></script></head><body>
+<header><span class="mark" aria-hidden="true">≋</span><strong>NganyaFlow</strong><span class="divider"></span>Wait simulator</header>
+<main><section class="controls"><h1>When is the next matatu?</h1>
+<p class="intro">Change the arrival pattern to see what a rider would see at the stage.</p>
+<form id="controls">
+<label>Boarding stage<select name="stage"><option value="kencom">Kencom</option><option value="odeon">Odeon</option><option value="railways">Railways</option></select></label>
+<div class="pair"><label>Day<select name="day"><option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option><option value="3">Thursday</option><option value="4">Friday</option><option value="5">Saturday</option><option value="6">Sunday</option></select></label>
+<label>Nairobi time<select name="hour"><option value="morning">07:29</option><option value="midday">12:29</option></select></label></div>
+<label class="slider"><span>Gap between the last two arrivals <output id="gapVal">6 min</output></span><input aria-label="Gap between the last two arrivals in minutes" name="gap" type="range" min="2" max="18" value="6"></label>
+<label class="slider"><span>Time since the last arrival <output id="elapsedVal">3 min</output></span><input aria-label="Time since the last arrival in minutes" name="elapsed" type="range" min="0" max="35" value="3"></label>
+<div class="actions"><button id="stale" type="button">Try stale evidence</button><button type="reset">Reset</button></div>
+</form></section>
+<section class="preview" aria-label="Android rider preview"><article class="phone">
+<div class="phonebar"><span id="clock">07:29</span><span>NganyaFlow</span></div>
+<div class="screen"><div class="eyeline">Boarding stage <span class="badge">Synthetic demo</span></div>
+<h2 id="stage">Kencom</h2><p class="direction">CBD study service · Townbound</p>
+<section class="estimate" aria-live="polite"><span>Next matatu</span><strong id="wait">Loading…</strong><p id="detail">Computing the wait range.</p></section>
+<h3>Arrival history</h3><div id="history" class="history">Loading observations…</div>
+<p class="evidence" id="evidence"></p>
+</div><div class="gesture" aria-hidden="true"></div></article></section></main>
+</body></html>

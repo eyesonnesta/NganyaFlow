@@ -1,5 +1,9 @@
 # NganyaFlow
 
+## One AI objective: waiting time
+
+SemFlow (the AI workstream) and NganyaFlow (the mobile product) share one target: minutes until the next vehicle arrives at a selected stage, route and direction. Start with the [standardization contract](docs/waiting-time-standard.md). MTA passenger-volume experiments are historical background, not this product's target or validation data.
+
 ## Backend development
 
 For the Artificial Intelligence study, read the [AI foundation and validation report](docs/ai-report.md)
@@ -62,7 +66,7 @@ These observations will support the development and evaluation of transport info
 
 ### Crew Features
 
-Matatu crew will be able to view available demand information for supported stages and routes. This feature will aim to help crew understand commuter demand where sufficient data will be available.
+Matatu crew may view observed arrival activity and separately labelled commuter reports. These are descriptive observations, not a passenger-demand forecast or a dispatch recommendation. The current AI model predicts waiting time only.
 
 ### Offline Support
 
@@ -90,4 +94,4 @@ Implementation details and setup instructions will be added as development progr
 
 ## Intended Outcome
 
-NganyaFlow will aim to make matatu travel more predictable by giving commuters clearer stage and route information while supporting structured observation collection and visibility into commuter demand.
+NganyaFlow will aim to make matatu travel more predictable by giving commuters clearer stage and route information while supporting structured observation collection and visibility into observed transport activity.
